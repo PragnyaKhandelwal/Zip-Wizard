@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1729526807 source:c:\mydata\1st year\sdf_c projects\sdf mini project\zip wizard.c
+	<stdio.h>
+	<windows.h>
+	<string.h>
+	<conio.h>
+
