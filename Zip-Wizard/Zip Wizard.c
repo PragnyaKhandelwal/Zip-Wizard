@@ -47,7 +47,6 @@ const char *menuItems[MENU_ITEMS] = {
     "7.) Zip File",
     "8.) Unzip File",
     "9.) Exit"};
-const char *default_directory = "C:\\path\\to\\directory"; // Set your default directory here
 
 int main()
 {
