@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <string.h>
 #include <conio.h>
+#include <stdlib.h>
 
 #ifndef GetFileExInfoBasic
 #define GetFileExInfoBasic 0
@@ -12,10 +13,10 @@
 #define INFO 15                  // white
 #define PROCESSING_STATEMENTS 11 // cyan
 #define WARNING 6                // orange (closest is yellow)
-#define ERROR 12                 // red
+#define ERROR_FILE 12            // red
 #define SUCCESS 10               // green
-#define MAX_FILE_NAME_LENGTH 99 // maximum length of file name
-
+#define MAX_FILE_NAME_LENGTH 99  // maximum length of file name
+#define MAX_CONTENT_LENGTH 999
 
 void menu();
 void heading(const char *text);
@@ -45,9 +46,8 @@ const char *menuItems[MENU_ITEMS] = {
     "6.) File Information",
     "7.) Zip File",
     "8.) Unzip File",
-    "9.) Exit"
-};
-
+    "9.) Exit"};
+const char *default_directory = "C:\\path\\to\\directory"; // Set your default directory here
 
 int main()
 {
@@ -104,11 +104,11 @@ void menu()
             }
             if (sscanf(input, "%d", &choice) == 1)
             {
-                if (choice >= 1 && choice <= 6)
+                if (choice >= 1 && choice <= 8)
                 {
                     userchoice(choice);
                 }
-                else if (choice == 7)
+                else if (choice == 9)
                 {
                     quitProgram();
                 }
@@ -119,7 +119,7 @@ void menu()
             }
             else
             {
-                zwPrint("Error: The input must be an integer\n", 20, ERROR);
+                zwPrint("Error: The input must be an integer\n", 20, ERROR_FILE);
             }
             zwPrint("Enter your choice:", 20, INFO); // Prompt again
         }
@@ -151,8 +151,8 @@ void zwPrint(const char *text, int offset, int type)
     case WARNING:
         textColor = WARNING;
         break;
-    case ERROR:
-        textColor = ERROR;
+    case ERROR_FILE:
+        textColor = ERROR_FILE;
         break;
     case SUCCESS:
         textColor = SUCCESS;
@@ -229,27 +229,32 @@ void userchoice(int n)
 void createfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
-    char file_content[1000];
+    char file_content[MAX_CONTENT_LENGTH + 1];
 
     zwPrint("Enter the name of the file to be created with .txt extension:", 20, INFO);
     fgets(file_name, sizeof(file_name), stdin);
 
     // Remove newline character, if present
     file_name[strcspn(file_name, "\n")] = '\0';
+
+    // Check if the file name is empty
     if (strlen(file_name) == 0)
     {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR);
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
         return;
     }
-    if (strlen(file_name) > MAX_FILE_NAME_LENGTH)
+
+    // Check if the file name is too long
+    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
     {
-        zwPrint("Error: File name is too long.\n", 20, ERROR);
+        zwPrint("Error: File name is too long. Maximum length is 99 characters.\n", 20, ERROR_FILE);
+        return;
     }
 
     // Check if the file name ends with .txt
     if (strstr(file_name, ".txt") == NULL)
     {
-        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR);
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
         return;
     }
 
@@ -259,14 +264,14 @@ void createfile()
     {
         fclose(checkFile); // Close the file if it exists
 
-        zwPrint("Error: File already exists. Choose a different name.\n", 20, ERROR);
+        zwPrint("Error: File already exists. Choose a different name.\n", 20, ERROR_FILE);
         return;
     }
 
     FILE *file = fopen(file_name, "w");
     if (file == NULL)
     {
-        zwPrint("Error in creating the file\n", 20, ERROR);
+        zwPrint("Error in creating the file\n", 20, ERROR_FILE);
         return;
     }
 
@@ -277,33 +282,32 @@ void createfile()
     fclose(file);
     zwPrint("Your file has been created successfully!\n", 20, SUCCESS);
 }
-
 void editfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
-    char file_content[1000];
+    char file_content[MAX_CONTENT_LENGTH + 1];
     zwPrint("Enter the name of the file to be edited with .txt extension:", 20, INFO);
     fgets(file_name, sizeof(file_name), stdin); // Prevent buffer overflow
     file_name[strcspn(file_name, "\n")] = '\0'; // Clear newline character
-    if (strlen(file_name) > MAX_FILE_NAME_LENGTH)
+    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
     {
-        zwPrint("Error: File name is too long.\n", 20, ERROR);
+        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
     }
     if (strstr(file_name, ".txt") == NULL)
     {
-        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR);
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
         return;
     }
     if (strlen(file_name) == 0)
     {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR);
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
         return;
     }
     FILE *file = fopen(file_name, "r");
     if (file == NULL)
     {
         printf("\n");
-        zwPrint("Error: File does not exist.\n", 20, ERROR);
+        zwPrint("Error: File does not exist.\n", 20, ERROR_FILE);
         return;
     }
     printf("\n");
@@ -320,7 +324,7 @@ void editfile()
     file = fopen(file_name, "a");
     if (file == NULL)
     {
-        zwPrint("Error opening file for editing.\n", 20, ERROR);
+        zwPrint("Error opening file for editing.\n", 20, ERROR_FILE);
         return;
     }
     fprintf(file, "%s\n", file_content);
@@ -331,27 +335,59 @@ void editfile()
 
 void renamefile()
 {
-    char file_name[100];
+    char file_name[MAX_FILE_NAME_LENGTH + 1];
     char new_file_name[100];
     zwPrint("Enter the name of the file to be renamed:", 20, INFO);
-    scanf("%99s", file_name);
-    printf("\n");
-    getchar();
-    FILE *file = fopen(file_name, "r");
-    if (file) {
-        zwPrint("Enter the new name of the file:", 20, INFO);
-        scanf("%99s", new_file_name);
-        printf("\n");
-        fclose(file);
+    fgets(file_name, sizeof(file_name), stdin);
+    file_name[strcspn(file_name, "\n")] = '\0'; // Clear newline character
+    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
+    {
+        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
     }
-     else {
-        zwPrint("Error: file does not exist.\n", 20, ERROR);
+    if (strstr(file_name, ".txt") == NULL)
+    {
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
         return;
     }
-    if (rename(file_name, new_file_name) == 0) {
+    if (strlen(file_name) == 0)
+    {
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+        return;
+    }
+    FILE *file = fopen(file_name, "r");
+    if (file)
+    {
+        zwPrint("Enter the new name of the file:", 20, INFO);
+
+        fgets(new_file_name, sizeof(new_file_name), stdin);
+        file_name[strcspn(new_file_name, "\n")] = '\0'; // Clear newline character
+        if (strlen(new_file_name) > MAX_FILE_NAME_LENGTH)
+        {
+            zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
+        }
+        if (strstr(new_file_name, ".txt") == NULL)
+        {
+            zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
+            return;
+        }
+        if (strlen(new_file_name) == 0)
+        {
+            zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+            return;
+        }
+    }
+    else
+    {
+        zwPrint("Error: file does not exist.\n", 20, ERROR_FILE);
+        return;
+    }
+    if (rename(file_name, new_file_name) == 0)
+    {
         zwPrint("File renamed successfully.\n", 20, SUCCESS);
-    } else {
-        zwPrint("Error renaming file\n", 20, ERROR);
+    }
+    else
+    {
+        zwPrint("Error renaming file\n", 20, ERROR_FILE);
     }
 }
 
@@ -361,18 +397,18 @@ void deletefile()
     zwPrint("Enter the name of the file to be deleted with .txt extension:", 20, INFO);
     fgets(file_name, sizeof(file_name), stdin);
     file_name[strcspn(file_name, "\n")] = '\0';
-    if (strlen(file_name) > MAX_FILE_NAME_LENGTH)
+    if (strlen(file_name) < !MAX_FILE_NAME_LENGTH)
     {
-        zwPrint("Error: File name is too long.\n", 20, ERROR);
+        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
     }
     if (strstr(file_name, ".txt") == NULL)
     {
-        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR);
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
         return;
     }
     if (strlen(file_name) == 0)
     {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR);
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
         return;
     }
     if (remove(file_name) == 0)
@@ -383,7 +419,7 @@ void deletefile()
     else
     {
         printf("\n");
-        zwPrint("Error: File does not exist\n", 20, ERROR);
+        zwPrint("Error: File does not exist\n", 20, ERROR_FILE);
     }
 }
 
@@ -391,97 +427,133 @@ void searchfile()
 {
     char file_name[100];
     zwPrint("Enter the name of the file to be searched:", 20, INFO);
-    scanf("%99s", file_name);
-    printf("\n");
-    getchar();
+    fgets(file_name, sizeof(file_name), stdin); // Prevent buffer overflow
+    file_name[strcspn(file_name, "\n")] = '\0'; // Clear newline character
+    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
+    {
+        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
+    }
+    if (strstr(file_name, ".txt") == NULL)
+    {
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
+        return;
+    }
+    if (strlen(file_name) == 0)
+    {
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+        return;
+    }
     FILE *file = fopen(file_name, "r");
-    if (file) {
+    if (file)
+    {
         zwPrint("File found successfully.\n", 20, SUCCESS);
         fclose(file);
     }
-    else {
-        zwPrint("Error: file does not exist.\n", 20, ERROR);
+    else
+    {
+        zwPrint("Error: file does not exist.\n", 20, ERROR_FILE);
         return;
     }
 }
-
 void fileinfo()
 {
-    char file_name[100];
-    zwPrint("Enter the name of the file:", 20, INFO);
-    scanf("%99s", file_name);
-    printf("\n");
-    getchar();
-    FILE *file = fopen(file_name, "r");
-    if (file) {
-    WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+    char file_name[MAX_FILE_NAME_LENGTH + 1];
+    zwPrint("Enter the name of the file to view its info:", 20, INFO);
+    fgets(file_name, sizeof(file_name), stdin);
+    file_name[strcspn(file_name, "\n")] = '\0'; // Remove newline character
+    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
+    {
+        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
+    }
+    if (strstr(file_name, ".txt") == NULL)
+    {
+        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
+        return;
+    }
+    if (strlen(file_name) == 0)
+    {
+        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+        return;
+    }
+    // Construct the full file path
+    char file_path[MAX_FILE_NAME_LENGTH + 2];
+    snprintf(file_path, sizeof(file_path), "%s", file_name);
+    printf("Checking file path: %s\n", file_path); // Debugging output
 
-    // Get file attributes
-    if (GetFileAttributesEx(file_name, GetFileExInfoBasic, &fileInfo)) {
+    // Attempt to open the file
+    FILE *file = fopen(file_path, "r");
+    if (file)
+    {
+        WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+        if (GetFileAttributesEx(file_path, GetFileExInfoBasic, &fileInfo))
+        {
             char fullPath[MAX_PATH];
-        if (GetFullPathName(file_name, MAX_PATH, fullPath, NULL) > 0) {
-                char output[MAX_PATH + 20]; // Extra space for "File Path: "
-            sprintf(output, "File Path: %s", fullPath);
-            zwPrint(output, 20, INFO);
-        // Prepare output strings
-        char attributes[256] = "Attributes: ";
-        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            strcat(attributes, "Directory ");
+            if (GetFullPathName(file_path, MAX_PATH, fullPath, NULL) > 0)
+            {
+                zwPrint(fullPath, 20, INFO);
+            }
+
+            // Prepare output strings for attributes
+            char attributes[256] = "Attributes: ";
+            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                strcat(attributes, "Directory ");
+            }
+            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+            {
+                strcat(attributes, "Read-Only ");
+            }
+            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+            {
+                strcat(attributes, "Hidden ");
+            }
+            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)
+            {
+                strcat(attributes, "System ");
+            }
+            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE)
+            {
+                strcat(attributes, "Archive ");
+            }
+
+            // Print attributes
+            zwPrint(attributes, 20, INFO);
+
+            // Retrieve and print timestamps
+            FILETIME localCreationTime, localAccessTime, localWriteTime;
+            SYSTEMTIME creationTime, accessTime, writeTime;
+
+            FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &localCreationTime);
+            FileTimeToLocalFileTime(&fileInfo.ftLastAccessTime, &localAccessTime);
+            FileTimeToLocalFileTime(&fileInfo.ftLastWriteTime, &localWriteTime);
+
+            FileTimeToSystemTime(&localCreationTime, &creationTime);
+            FileTimeToSystemTime(&localAccessTime, &accessTime);
+            FileTimeToSystemTime(&localWriteTime, &writeTime);
+
+            char created[256], accessed[256], modified[256];
+            sprintf(created, "Created: %02d/%02d/%d %02d:%02d:%02d",
+                    creationTime.wDay, creationTime.wMonth, creationTime.wYear,
+                    creationTime.wHour, creationTime.wMinute, creationTime.wSecond);
+
+            sprintf(accessed, "Last Accessed: %02d/%02d/%d %02d:%02d:%02d",
+                    accessTime.wDay, accessTime.wMonth, accessTime.wYear,
+                    accessTime.wHour, accessTime.wMinute, accessTime.wSecond);
+
+            sprintf(modified, "Last Modified: %02d/%02d/%d %02d:%02d:%02d",
+                    writeTime.wDay, writeTime.wMonth, writeTime.wYear,
+                    writeTime.wHour, writeTime.wMinute, writeTime.wSecond);
+
+            // Print timestamps
+            zwPrint(created, 20, INFO);
+            zwPrint(accessed, 20, INFO);
+            zwPrint(modified, 20, INFO);
         }
-        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-            strcat(attributes, "Read-Only ");
-        }
-        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
-            strcat(attributes, "Hidden ");
-        }
-        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) {
-            strcat(attributes, "System ");
-        }
-        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-            strcat(attributes, "Archive ");
-        }
-
-        // Print attributes using zwPrint
-        zwPrint(attributes, 20, INFO);
-
-        // Retrieve and print timestamps
-        FILETIME localCreationTime, localAccessTime, localWriteTime;
-        SYSTEMTIME creationTime, accessTime, writeTime;
-
-        // Convert and print creation time
-        FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &localCreationTime);
-        FileTimeToLocalFileTime(&fileInfo.ftLastAccessTime, &localAccessTime);
-        FileTimeToLocalFileTime(&fileInfo.ftLastWriteTime, &localWriteTime);
-
-        FileTimeToSystemTime(&localCreationTime, &creationTime);
-        FileTimeToSystemTime(&localAccessTime, &accessTime);
-        FileTimeToSystemTime(&localWriteTime, &writeTime);
-
-        char created[256], accessed[256], modified[256];
-        sprintf(created, "Created: %02d/%02d/%d %02d:%02d:%02d",
-                creationTime.wDay, creationTime.wMonth, creationTime.wYear,
-                creationTime.wHour, creationTime.wMinute, creationTime.wSecond);
-
-        sprintf(accessed, "Last Accessed: %02d/%02d/%d %02d:%02d:%02d",
-                accessTime.wDay, accessTime.wMonth, accessTime.wYear,
-                accessTime.wHour, accessTime.wMinute, accessTime.wSecond);
-
-        sprintf(modified, "Last Modified: %02d/%02d/%d %02d:%02d:%02d\n",
-                writeTime.wDay, writeTime.wMonth, writeTime.wYear,
-                writeTime.wHour, writeTime.wMinute, writeTime.wSecond);
-
-        // Print timestamps using zwPrint
-        zwPrint(created, 20, INFO);
-        zwPrint(accessed, 20, INFO);
-        zwPrint(modified, 20, INFO);
+        fclose(file);
     }
-    }
-     else {
-        zwPrint("Error retrieving file properties:\n", 20, ERROR);
-    }
-}
-else {
-        zwPrint("Error: file does not exist.\n", 20, ERROR);
+    else
+    {
+        zwPrint("Error: file does not exist or could not be opened.\n", 20, ERROR_FILE);
     }
 }
 
