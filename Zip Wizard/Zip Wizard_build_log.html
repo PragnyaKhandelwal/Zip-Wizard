@@ -1,0 +1,19 @@
+<html>
+<head>
+<title>Zip Wizard build log</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
+<body>
+<tt>
+Build started on: <u>29-10-2024 at 16:12.23</u><br />
+Build ended on: <u>29-10-2024 at 16:12.24</u><p />
+<b>-------------- Build: Debug in Zip Wizard (compiler: GNU GCC Compiler)---------------</b><br />
+gcc.exe -Wall -g  -c "C:\MyData\1st Year\SDF_C Projects\Zip Wizard\main.c" -o obj\Debug\main.o<br />
+gcc.exe  -o "bin\Debug\Zip Wizard.exe" obj\Debug\createFile.o obj\Debug\deleteFile.o obj\Debug\editFile.o obj\Debug\fileInfo.o obj\Debug\main.o obj\Debug\renameFile.o obj\Debug\searchFile.o obj\Debug\unzipFile.o obj\Debug\Utils.o obj\Debug\zipFile.o<br />
+obj\Debug\zipFile.o:zipFile.c:(.bss+0x0): multiple definition of "outputCount'<br />
+obj\Debug\main.o:main.c:(.bss+0x0): first defined here<br />
+<font color="#ff0000">collect2.exe: error: ld returned 1 exit status</font><br />
+<font color="#a00000">Process terminated with status 1 (0 minute(s), 0 second(s))</font><br />
+<font color="#a00000">1 error(s), 0 warning(s) (0 minute(s), 0 second(s))</font><br />
+</tt>
+</body>
+</html>
