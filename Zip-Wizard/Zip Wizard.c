@@ -275,7 +275,7 @@ void createfile()
             zwPrint("Error: File already exists. Choose a different name.\n", 20, ERROR_FILE);
             return;
         }
-    }
+    
     FILE *file = fopen(file_name, "w");
     if (file == NULL)
     {
@@ -288,6 +288,9 @@ void createfile()
     fprintf(file, "%s", file_content);
     fclose(file);
     zwPrint("Your file has been created successfully!\n", 20, SUCCESS);
+    }
+    else
+    zwPrint("Enter a valid name.\n",20,ERROR_FILE);
 }
 void editfile()
 {
