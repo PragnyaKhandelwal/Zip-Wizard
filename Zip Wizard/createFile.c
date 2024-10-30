@@ -27,14 +27,6 @@ void createfile()
         zwPrint("Error: File name is too long. Maximum length is 99 characters.\n", 20, ERROR_FILE);
         return;
     }
-
-    // Check if the file name ends with .txt
-    if (strstr(file_name, ".txt") == NULL)
-    {
-        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
-        return;
-    }
-
     // Check if the file already exists
     FILE *checkFile = fopen(file_name, "r");
     if (checkFile)
