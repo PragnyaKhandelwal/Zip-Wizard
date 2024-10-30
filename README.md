@@ -1,5 +1,3 @@
----
-
 # ZIP WIZARD - File Handling and Compression System
 
 ## Project Overview
@@ -38,3 +36,5 @@
 For further information and usage details, please refer to the project documentation.
 
 --- 
+
+Feel free to make any further adjustments!
