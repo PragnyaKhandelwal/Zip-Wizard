@@ -17,11 +17,7 @@ void fileinfo()
     {
         zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
     }
-    if (strstr(file_name, ".txt") == NULL)
-    {
-        zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
-        return;
-    }
+   
     if (strlen(file_name) == 0)
     {
         zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
