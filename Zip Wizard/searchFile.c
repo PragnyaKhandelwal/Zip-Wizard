@@ -1,8 +1,6 @@
 #include "Utils.h"
 #include "searchFile.h"
 
-void searchfile();
-
 void searchfile()
 {
     char file_name[100];
