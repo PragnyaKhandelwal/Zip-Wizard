@@ -9,13 +9,6 @@
 #include "zipFile.h"
 #include "unzipFile.h"
 
-void menu();
-void heading(const char *text);
-void userchoice(int n);
-void quitProgram();
-int getConsoleWidth();
-void reprintOutputs();
-
 int outputCount = 0;
 char outputLog[MAX_OUTPUT_LINES][100];
 
@@ -34,10 +27,6 @@ const char *menuItems[MENU_ITEMS] = {
 
 void menu()
 {
-    int choice = -1;
-    int oldWidth = getConsoleWidth(); // Track the previous width
-    // Print the initial menu
-    system("cls"); // Clear the console once at the beginning
     for (int i = 0; i < MENU_ITEMS; i++)
     {
         if (i == 0)
@@ -55,18 +44,11 @@ void menu()
     }
     printf("\n");
     zwPrint("Enter your choice:", 20, INFO); // Prompt for input
-    while (1)
+}
+    void validatechoices()
     {
-        int newWidth = getConsoleWidth();
-        // Update if the width has changed
-        if (newWidth != oldWidth)
-        {
-            oldWidth = newWidth;
-            system("cls");    // Clear the screen and reprint
-            reprintOutputs(); // Reprint all outputs
-        }
-        // Handle user input
-        if (_kbhit())
+        int choice = -1;
+       if (_kbhit())
         {
             char input[10];                     // Buffer for input
             fgets(input, sizeof(input), stdin); // Read input from user
@@ -76,9 +58,9 @@ void menu()
             if (strlen(input) == 0)
             {
                 zwPrint("Error: Input cannot be empty. Please enter a number from the menu.\n", 20, WARNING);
-                continue; // Go to the next iteration of the loop
+             // Go to the next iteration of the loop
             }
-            if (sscanf(input, "%d", &choice) == 1)
+            else if (sscanf(input, "%d", &choice) == 1)
             {
                 if (choice >= 1 && choice <= 8)
                 {
@@ -99,40 +81,20 @@ void menu()
             }
             zwPrint("Enter your choice:", 20, INFO); // Prompt again
         }
-        Sleep(100); // Slight delay for better user experience
     }
-}
 
 void heading(const char *text)
 {
-    int consoleWidth = getConsoleWidth();
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hConsole, &csbi);
+    COORD bufferSize = {100, 100}; // Buffer size must be at least as large as the window size
+    SetConsoleScreenBufferSize(hConsole, bufferSize);
+    int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1; // Width of the console
+    // Calculate the position to center the text
     int textLength = strlen(text);
-    int pos = (consoleWidth - textLength) / 2; // Center the text
+    int pos = (consoleWidth - textLength) / 2;
     zwPrint(text, pos, INFO);
-}
-
-void reprintOutputs()
-{
-    // Print the menu again
-    heading(menuItems[0]); // Reprint the heading
-    for (int i = 1; i < MENU_ITEMS; i++)
-    {
-        if (i == 1)
-        {
-            zwPrint(menuItems[i], 20, INFO); // Menu items with offset
-        }
-        else
-        {
-            zwPrint(menuItems[i], 22, INFO);
-        }
-    }
-    // Reprint stored outputs
-    for (int i = 0; i < outputCount; i++)
-    {
-        zwPrint(outputLog[i], 20, INFO);
-    }
-    printf("\n");
-    zwPrint("Enter your choice:", 20, INFO); // Prompt again
 }
 
 void userchoice(int n)
@@ -172,14 +134,6 @@ void userchoice(int n)
         //unzipfile();
         break;
     }
-}
-
-int getConsoleWidth()
-{
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
-    return csbi.srWindow.Right - csbi.srWindow.Left + 1; // Width of the console
 }
 
 void quitProgram()
