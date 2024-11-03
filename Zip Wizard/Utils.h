@@ -14,6 +14,7 @@
 #define MAX_OUTPUT_LINES 50
 #define MAX_TREE_NODES 256
 
+void terminalSize(int width, int height);
 void zwPrint(const char *text, int offset, int type);
 
 #endif
