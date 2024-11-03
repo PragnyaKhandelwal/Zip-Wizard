@@ -6,10 +6,9 @@
 #include <conio.h>
 
 void menu();
+void validatechoices();
 void heading(const char *text);
 void userchoice(int n);
 void quitProgram();
-int getConsoleWidth();
-void reprintOutputs();
 
 #endif
