@@ -2,8 +2,6 @@
 #include "Utils.h"
 #include "editFile.h"
 
-void editfile();
-
 void editfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
