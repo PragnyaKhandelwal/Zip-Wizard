@@ -1,8 +1,6 @@
 #include "Utils.h"
 #include <windows.h>
 
-void zwPrint(const char *text, int offset, int type);
-
 void zwPrint(const char *text, int offset, int type)
 {
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
