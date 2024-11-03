@@ -1,8 +1,6 @@
 #include "createFile.h"
 #include "Utils.h"
 
-void createfile();
-
 void createfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
