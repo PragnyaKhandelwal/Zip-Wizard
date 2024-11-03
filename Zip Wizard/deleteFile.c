@@ -1,8 +1,6 @@
 #include "Utils.h"
 #include "deleteFile.h"
 
-void deletefile();
-
 void deletefile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
