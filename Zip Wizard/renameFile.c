@@ -1,8 +1,6 @@
 #include "renameFile.h"
 #include "Utils.h"
 
-void renamefile();
-
 void renamefile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
