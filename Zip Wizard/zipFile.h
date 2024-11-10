@@ -1,10 +1,10 @@
 #ifndef ZIPFILE_H
 #define ZIPFILE_H
-
+#include<stdio.h>
 #define MAX_FILE_NAME_LENGTH 255
 #define MAX_TREE_NODES 256
-#define WINDOW_SIZE 4096
-#define BUFFER_SIZE 18
+#define WINDOW_SIZE 1024
+#define BUFFER_SIZE 256
 
 // Node structure for the Huffman tree
 typedef struct Node {
