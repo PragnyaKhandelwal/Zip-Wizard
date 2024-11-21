@@ -4,8 +4,6 @@
 #include <string.h>
 #include "unzipFile.h"
 
-
-
 void lz77Decompress(FILE *compressedFile, FILE *outputFile) {
     int offset, length;
     char nextChar;
@@ -55,30 +53,41 @@ void unzipFile() {
     char outputFileName[MAX_FILE_NAME_LENGTH + 1];
 
     // Get the name of the compressed file from the user
-    printf("Enter the name of the compressed file (with .zip): ");
+    zwPrint("Enter the name of the compressed file (with .zip): \n", 20, INFO);
     scanf("%s", compressedFileName);
 
-    // Get the name for the output file
-    printf("Enter the name for the output file: ");
-    scanf("%s", outputFileName);
+    // Generate the output file name by removing the .zip extension and appending _output.txt
+    char *zipExtension = strstr(compressedFileName, ".zip");
+    if (zipExtension) {
+        size_t prefixLength = zipExtension - compressedFileName;
+        snprintf(outputFileName, sizeof(outputFileName), "%.*s_output.txt", (int)prefixLength, compressedFileName);
+    } else {
+        // If no ".zip" is found, just append "_output.txt" to the input file name
+        snprintf(outputFileName, sizeof(outputFileName), "%s_output.txt", compressedFileName);
+    }
 
+    // Open the compressed file
     FILE *compressedFile = fopen(compressedFileName, "rb");
     if (!compressedFile) {
-        fprintf(stderr, "Error: Unable to open compressed file for reading.\n");
+        zwPrint("Error: Unable to open compressed file for reading.\n", 20, ERROR_FILE);
         return;
     }
 
+    // Open the output file for writing
     FILE *outputFile = fopen(outputFileName, "wb");
     if (!outputFile) {
-        fprintf(stderr, "Error: Unable to open output file for writing.\n");
+        zwPrint("Error: Unable to open output file for writing.\n", 20, ERROR_FILE);
         fclose(compressedFile);
         return;
     }
 
-    lz77Decompress(compressedFile, outputFile); // Call to your decompression function
+    // Call decompression function
+    lz77Decompress(compressedFile, outputFile);
 
+    // Close the files
     fclose(compressedFile);
     fclose(outputFile);
-    printf("File unzipped successfully.\n");
-}
 
+    zwPrint("File decompressed successfully\n", 20, SUCCESS);
+    while (getchar() != '\n'); // Clear the input buffer
+}
