@@ -70,34 +70,42 @@ void userchoice(int n) {
     case 1:
         zwPrint("Creating a file...\n", 20, PROCESSING_STATEMENTS);
         createfile();
+        while (getchar() != '\n'); 
         break;
     case 2:
         zwPrint("Editing the file...\n", 20, PROCESSING_STATEMENTS);
         editfile();
+        while (getchar() != '\n'); 
         break;
     case 3:
         zwPrint("Renaming the file...\n", 20, PROCESSING_STATEMENTS);
         renamefile();
+        while (getchar() != '\n'); 
         break;
     case 4:
         zwPrint("Deleting the file...\n", 20, PROCESSING_STATEMENTS);
         deletefile();
+        while (getchar() != '\n'); 
         break;
     case 5:
         zwPrint("Searching the file...\n", 20, PROCESSING_STATEMENTS);
         searchfile();
+        while (getchar() != '\n'); 
         break;
     case 6:
         zwPrint("Fetching file information...\n", 20, PROCESSING_STATEMENTS);
         fileinfo();
+        while (getchar() != '\n'); 
         break;
     case 7:
         zwPrint("Zipping the file...\n", 20, PROCESSING_STATEMENTS);
         zipfile();
+        while (getchar() != '\n'); 
         break;
     case 8:
         zwPrint("Unzipping the file...\n", 20, PROCESSING_STATEMENTS);
         unzipFile();
+        while (getchar() != '\n'); 
         break;
     }
 }
