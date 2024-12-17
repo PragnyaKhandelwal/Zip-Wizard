@@ -16,7 +16,7 @@
 
 - **Compression and Decompression**: 
   - Implementing the LZ77 for efficient compression.
-  - Restore files reversing the LZ77 compression .
+  - Restore files by reversing the LZ77 compression .
 
 - **User Interface**: Intuitive, menu-driven command-line interface.
 
