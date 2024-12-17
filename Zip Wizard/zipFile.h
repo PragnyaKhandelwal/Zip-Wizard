@@ -1,35 +1,12 @@
-#ifndef ZIPFILE_H
-#define ZIPFILE_H
-#include<stdio.h>
+// unzip.h
+#ifndef UNZIP_H
+#define UNZIP_H
+
+#include <stdio.h>
 #include "Utils.h"
-#define MAX_FILE_NAME_LENGTH 255
-#define MAX_TREE_NODES 512
-#define WINDOW_SIZE 2048
-#define BUFFER_SIZE 512
+#include "zipFile.h"  // Ensure this is included for Node type and other declarations
 
-// Node structure for the Huffman tree
-typedef struct Node {
-    char character;
-    unsigned frequency;
-    struct Node *left;
-    struct Node *right;
-} Node;
+void unzipFile(); // Function to unzip a file
+void lz77Decompress(FILE *compressedFile, FILE *outputFile); // LZ77 decompression
 
-// Min-heap structure
-typedef struct MinHeap {
-    unsigned size;
-    Node** array;
-} MinHeap;
-
-void lz77(FILE *inputFile, FILE *compressedFile);
-void huffmanCoding(FILE *lz77Output, const char *compressedFile);
-Node* createNode(char character, unsigned frequency);
-MinHeap* createMinHeap();
-void insertMinHeap(MinHeap* minHeap, Node* node);
-Node* extractMin(MinHeap* minHeap);
-void buildHuffmanTree(unsigned frequency[], Node** root);
-void generateHuffmanCodes(Node* root, char *code, int depth, char codes[MAX_TREE_NODES][MAX_TREE_NODES]);
-void freeHuffmanTree(Node* root);
-void zipfile();
-
-#endif // ZIPFILE_H
+#endif // UNZIP_H
