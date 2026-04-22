@@ -1,0 +1,6 @@
+*.exe
+*.zip
+*_output.txt
+cp_smoke.txt
+cp_smoke_renamed.txt
+benchmark_data/
