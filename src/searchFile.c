@@ -68,18 +68,18 @@ static int fileContainsKeywordKmp(FILE *file, const char *keyword) {
 
 void searchfile() {
     char search_option;
+    char optionInput[8];
     char file_name[MAX_FILE_NAME_LENGTH], keyword[MAX_KEYWORD_LENGTH];
 
     // Ask user to choose search type (by name or keyword)
-    zwPrint("Search by (n)ame or by (k)eyword?", 20, INFO);
-    search_option = getchar();
-    getchar();  // Consume newline character left by getchar()
+    zwPrintInline("Search by name(n) or keyword(k): ", 20, INFO);
+    zwReadLine(optionInput, sizeof(optionInput), 53);
+    search_option = optionInput[0];
 
     if (search_option == 'n' || search_option == 'N') {
         // Search by file name
-        zwPrint("Enter the name of the file to be searched with .txt:\n", 20, INFO);
-        fgets(file_name, sizeof(file_name), stdin);
-        file_name[strcspn(file_name, "\n")] = '\0';  // Remove newline
+        zwPrintInline("File name/pattern: ", 20, INFO);
+        zwReadLine(file_name, sizeof(file_name), 39);
 
         // Validate file name 
        if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
@@ -128,9 +128,8 @@ void searchfile() {
 
     } else if (search_option == 'k' || search_option == 'K') {
         // Search by keyword in text files
-        zwPrint("Enter the keyword to search in text files:", 20, INFO);
-        fgets(keyword, sizeof(keyword), stdin);
-        keyword[strcspn(keyword, "\n")] = '\0';  // Remove newline
+        zwPrintInline("Keyword: ", 20, INFO);
+        zwReadLine(keyword, sizeof(keyword), 29);
 
         // Validate keyword input
         if (strlen(keyword) == 0) {

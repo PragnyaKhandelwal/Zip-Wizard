@@ -1,11 +1,13 @@
 #include "Utils.h"
+#include <string.h>
 #include <windows.h>
 
-void zwPrint(const char *text, int offset, int type)
+static void zwApplyColor(int type)
 {
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    int textColor = INFO; // Default to white
-    int bgColor = 0;      // Assuming black background
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    int textColor = INFO;
+    int bgColor = 0;
+
     switch (type)
     {
     case INFO:
@@ -24,12 +26,73 @@ void zwPrint(const char *text, int offset, int type)
         textColor = SUCCESS;
         break;
     }
+
     SetConsoleTextAttribute(hConsole, (bgColor << 4) | textColor);
+}
+
+void zwMoveCursor(int offset)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
     GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-    COORD coord = {offset, consoleInfo.dwCursorPosition.Y};
+    COORD coord = {(SHORT)offset, consoleInfo.dwCursorPosition.Y};
     SetConsoleCursorPosition(hConsole, coord);
+}
+
+void zwPrint(const char *text, int offset, int type)
+{
+    zwApplyColor(type);
+    zwMoveCursor(offset);
     printf("%s\n", text); // Print the text with a newline
+}
+
+void zwPrintInline(const char *text, int offset, int type)
+{
+    zwApplyColor(type);
+    zwMoveCursor(offset);
+    printf("%s", text);
+    fflush(stdout);
+}
+
+void zwReadLine(char *buffer, size_t size, int offset)
+{
+    zwMoveCursor(offset);
+    if (fgets(buffer, (int)size, stdin) == NULL)
+    {
+        if (size > 0)
+        {
+            buffer[0] = '\0';
+        }
+        return;
+    }
+
+    buffer[strcspn(buffer, "\n")] = '\0';
+}
+
+void zwClearScreen(void)
+{
+    system("cls");
+}
+
+void zwDrawRule(int offset, int width, char ch, int type)
+{
+    if (width <= 0)
+    {
+        return;
+    }
+
+    char line[256];
+    if (width >= (int)sizeof(line))
+    {
+        width = (int)sizeof(line) - 1;
+    }
+
+    for (int i = 0; i < width; i++)
+    {
+        line[i] = ch;
+    }
+    line[width] = '\0';
+    zwPrint(line, offset, type);
 }
 
 void terminalSize(int width, int height) {

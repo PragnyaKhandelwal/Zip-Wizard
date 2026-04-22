@@ -7,11 +7,8 @@ void createfile()
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char file_content[MAX_CONTENT_LENGTH + 1];
 
-    zwPrint("Enter the name of the file to be created with .txt extension:", 20, INFO);
-    fgets(file_name, sizeof(file_name), stdin);
-
-    // Remove newline character, if present
-    file_name[strcspn(file_name, "\n")] = '\0';
+    zwPrintInline("File name (.txt): ", 20, INFO);
+    zwReadLine(file_name, sizeof(file_name), 38);
 
     // Check if the file name is empty
     if (strlen(file_name) == 0)
@@ -40,9 +37,8 @@ void createfile()
         return;
     }
 
-    zwPrint("Enter the content to be written in the file:", 20, INFO);
-    fgets(file_content, sizeof(file_content), stdin);
-    file_content[strcspn(file_content, "\n")] = '\0';
+    zwPrintInline("Initial content: ", 20, INFO);
+    zwReadLine(file_content, sizeof(file_content), 37);
     fprintf(file, "%s", file_content);
     fclose(file);
     fileIndexAdd(file_name);

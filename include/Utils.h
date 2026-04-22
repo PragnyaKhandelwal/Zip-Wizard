@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <stdio.h>
+#include <stddef.h>
 #include <windows.h>
 // Color codes
 #define INFO 15                  // white
@@ -18,5 +19,10 @@
 
 void terminalSize(int width, int height);
 void zwPrint(const char *text, int offset, int type);
+void zwPrintInline(const char *text, int offset, int type);
+void zwReadLine(char *buffer, size_t size, int offset);
+void zwClearScreen(void);
+void zwDrawRule(int offset, int width, char ch, int type);
+void zwMoveCursor(int offset);
 
 #endif

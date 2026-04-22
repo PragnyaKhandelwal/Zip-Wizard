@@ -6,9 +6,8 @@ void renamefile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char new_file_name[100];
-    zwPrint("Enter the name of the file to be renamed:", 20, INFO);
-    fgets(file_name, sizeof(file_name), stdin);
-    file_name[strcspn(file_name, "\n")] = '\0'; // Clear newline character
+    zwPrintInline("Current file name: ", 20, INFO);
+    zwReadLine(file_name, sizeof(file_name), 39);
     if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
     {
         zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
@@ -21,10 +20,8 @@ void renamefile()
     }
     if (fileIndexContains(file_name))
     {
-        zwPrint("Enter the new name of the file:", 20, INFO);
-
-        fgets(new_file_name, sizeof(new_file_name), stdin);
-        new_file_name[strcspn(new_file_name, "\n")] = '\0'; // Clear newline character
+        zwPrintInline("New file name: ", 20, INFO);
+        zwReadLine(new_file_name, sizeof(new_file_name), 35);
         if (strlen(new_file_name) > MAX_FILE_NAME_LENGTH)
         {
             zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);

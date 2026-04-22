@@ -39,28 +39,23 @@ static void runTimedOperation(const char *operationName, void (*operation)(void)
 
 // Define the menu function
 void menu() {
-    const char *menuItems[] = {
-        "** WELCOME TO ZIPWIZARD !! **\n\n\n",
-        "The Wizard provides you with various file handling operations:\n",
-        "1.) Create File",
-        "2.) Edit File",
-        "3.) Rename File",
-        "4.) Delete File",
-        "5.) File Search",
-        "6.) File Information",
-        "7.) Zip File",
-        "8.) Unzip File",
-        "9.) Exit"
-    };
+    zwClearScreen();
+    zwDrawRule(14, 80, '=', PROCESSING_STATEMENTS);
+    heading("ZIP WIZARD - PROFESSIONAL FILE UTILITY");
+    zwDrawRule(14, 80, '=', PROCESSING_STATEMENTS);
 
-    // Print the menu items
-    for (size_t i = 0; i < sizeof(menuItems) / sizeof(menuItems[0]); i++) {
-        if (i == 0) {
-            heading(menuItems[i]);
-        } else {
-            zwPrint(menuItems[i], 22, INFO);
-        }
-    }
+    zwPrint("Choose an operation:", 20, INFO);
+    zwDrawRule(20, 52, '-', INFO);
+    zwPrint("[1] Create File", 22, INFO);
+    zwPrint("[2] Edit File", 22, INFO);
+    zwPrint("[3] Rename File", 22, INFO);
+    zwPrint("[4] Delete File", 22, INFO);
+    zwPrint("[5] File Search", 22, INFO);
+    zwPrint("[6] File Information", 22, INFO);
+    zwPrint("[7] Zip File", 22, INFO);
+    zwPrint("[8] Unzip File", 22, INFO);
+    zwPrint("[9] Exit", 22, INFO);
+    zwDrawRule(20, 52, '-', INFO);
     printf("\n");
 
 }
@@ -74,7 +69,7 @@ void heading(const char *text) {
     SetConsoleScreenBufferSize(hConsole, bufferSize);
     int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1; // Width of the console
     // Calculate the position to center the text
-    int textLength = strlen(text);
+    int textLength = (int)strlen(text);
     int pos = (consoleWidth - textLength) / 2;
     zwPrint(text, pos, INFO);
 }
@@ -132,15 +127,12 @@ void validatechoices() {
     int choice = -1;
 
     // Prompt for input
-    zwPrint("Enter your choice:", 20, INFO);
+    zwPrintInline("Enter your choice: ", 20, INFO);
 
     // Continuously prompt the user until a valid input is entered
     while (1) {
-        char input[10];  // Buffer for input
-        fgets(input, sizeof(input), stdin);  // Read input from user
-
-        // Remove newline character if it exists
-        input[strcspn(input, "\n")] = '\0';  // Clears newline character
+        char input[10];
+        zwReadLine(input, sizeof(input), 39);
 
         // Check for empty input
         if (strlen(input) == 0) {

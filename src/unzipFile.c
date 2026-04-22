@@ -53,8 +53,8 @@ void unzipFile() {
     char outputFileName[MAX_FILE_NAME_LENGTH + 1];
 
     // Get the name of the compressed file from the user
-    zwPrint("Enter the name of the compressed file (with .zip): \n", 20, INFO);
-    scanf("%s", compressedFileName);
+    zwPrintInline("Compressed file (.zip): ", 20, INFO);
+    zwReadLine(compressedFileName, sizeof(compressedFileName), 44);
 
     // Generate the output file name by removing the .zip extension and appending _output.txt
     char *zipExtension = strstr(compressedFileName, ".zip");
@@ -89,5 +89,4 @@ void unzipFile() {
     fclose(outputFile);
 
     zwPrint("File decompressed successfully\n", 20, SUCCESS);
-    while (getchar() != '\n'); // Clear the input buffer
 }

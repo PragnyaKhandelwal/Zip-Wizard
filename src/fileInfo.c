@@ -9,13 +9,8 @@
 void fileinfo()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
-    zwPrint("Enter the name of the file to view its info:", 20, INFO);
-    fgets(file_name, sizeof(file_name), stdin);
-    file_name[strcspn(file_name, "\n")] = '\0'; // Remove newline character
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
-    {
-        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
-    }
+    zwPrintInline("File name for info: ", 20, INFO);
+    zwReadLine(file_name, sizeof(file_name), 40);
    
     if (strlen(file_name) == 0)
     {

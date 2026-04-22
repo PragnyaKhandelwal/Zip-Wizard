@@ -281,9 +281,8 @@ void zipfile() {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char compressed_file[MAX_FILE_NAME_LENGTH + 1];
 
-    zwPrint("Enter the name of the file to be zipped:", 20, INFO);
-    fgets(file_name, sizeof(file_name), stdin);
-    file_name[strcspn(file_name, "\n")] = '\0'; // Remove newline character
+    zwPrintInline("File to zip: ", 20, INFO);
+    zwReadLine(file_name, sizeof(file_name), 33);
 
     snprintf(compressed_file, sizeof(compressed_file), "%s.zip", file_name);
     FILE *fileName = fopen(file_name, "rb");

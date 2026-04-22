@@ -6,9 +6,8 @@ void editfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char file_content[MAX_CONTENT_LENGTH + 1];
-    zwPrint("Enter the name of the file to be edited with .txt extension:", 20, INFO);
-    fgets(file_name, sizeof(file_name), stdin); // Prevent buffer overflow
-    file_name[strcspn(file_name, "\n")] = '\0'; // Clear newline character
+    zwPrintInline("File to edit (.txt): ", 20, INFO);
+    zwReadLine(file_name, sizeof(file_name), 40);
     if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
     {
         zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
@@ -33,9 +32,8 @@ void editfile()
     }
     fclose(file);
     printf("\n");
-    zwPrint("Enter the new content to append to the file:", 20, INFO);
-    fgets(file_content, sizeof(file_content), stdin);
-    file_content[strcspn(file_content, "\n")] = '\0';
+    zwPrintInline("Append content: ", 20, INFO);
+    zwReadLine(file_content, sizeof(file_content), 36);
     file = fopen(file_name, "a");
     if (file == NULL)
     {
