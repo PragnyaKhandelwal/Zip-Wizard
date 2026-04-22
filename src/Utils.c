@@ -115,3 +115,157 @@ void terminalSize(int width, int height) {
     // Set the window size
     SetWindowPos(hWnd, NULL, 0, 0, width * 8, height * 16, SWP_NOZORDER | SWP_NOMOVE);
 }
+
+// ===== NEW PROFESSIONAL UI IMPLEMENTATIONS =====
+
+// Get console width for centering
+static int getConsoleWidth(void)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(hConsole, &csbi);
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+}
+
+// Centered text printing
+void zwPrintCentered(const char *text, int type)
+{
+    int consoleWidth = getConsoleWidth();
+    int textLength = (int)strlen(text);
+    int pos = (consoleWidth - textLength) / 2;
+    if (pos < 0) pos = 0;
+    zwPrint(text, pos, type);
+}
+
+// Prompt + Input aligned properly (KEY IMPROVEMENT)
+void zwPromptInput(const char *prompt, char *buffer, size_t size, int type)
+{
+    zwApplyColor(type);
+    
+    // Print prompt at column 0 and read from where it ends
+    printf("%s", prompt);
+    fflush(stdout);
+    
+    // Read input on the same line
+    if (fgets(buffer, (int)size, stdin) == NULL)
+    {
+        if (size > 0) buffer[0] = '\0';
+        return;
+    }
+    buffer[strcspn(buffer, "\n")] = '\0';
+    
+    // Reset color
+    zwApplyColor(INFO);
+}
+
+// Input field with visual underline
+void zwInputFieldUnderline(const char *prompt, char *buffer, size_t size, int type)
+{
+    zwApplyColor(type);
+    printf("\n  %s", prompt);
+    fflush(stdout);
+    
+    // Calculate underline width
+    int underlineLen = (int)strlen(prompt) + 2;
+    if (underlineLen > 60) underlineLen = 60;
+    
+    if (fgets(buffer, (int)size, stdin) == NULL)
+    {
+        if (size > 0) buffer[0] = '\0';
+        return;
+    }
+    buffer[strcspn(buffer, "\n")] = '\0';
+    
+    // Print underline below input
+    printf("  ");
+    for (int i = 0; i < underlineLen; i++) printf("_");
+    printf("\n");
+    fflush(stdout);
+    
+    zwApplyColor(INFO);
+}
+
+// Simple box drawing (top border)
+void zwDrawBoxSimple(int width, int type)
+{
+    zwApplyColor(type);
+    printf("  ");
+    for (int i = 0; i < width; i++) printf("═");
+    printf("\n");
+    fflush(stdout);
+    zwApplyColor(INFO);
+}
+
+// Complex box drawing
+void zwDrawBox(int width, int height, int offsetX, int offsetY, int type)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    zwApplyColor(type);
+    
+    // Each row
+    for (int y = 0; y < height; y++) {
+        COORD coord = {(SHORT)offsetX, (SHORT)(offsetY + y)};
+        SetConsoleCursorPosition(hConsole, coord);
+        
+        if (y == 0) {
+            // Top border
+            printf("╔");
+            for (int x = 1; x < width - 1; x++) printf("═");
+            printf("╗");
+        } else if (y == height - 1) {
+            // Bottom border
+            printf("╚");
+            for (int x = 1; x < width - 1; x++) printf("═");
+            printf("╝");
+        } else {
+            // Side borders
+            printf("║");
+            for (int x = 1; x < width - 1; x++) printf(" ");
+            printf("║");
+        }
+    }
+    fflush(stdout);
+    zwApplyColor(INFO);
+}
+
+// Progress bar display
+void zwDrawProgressBar(int percentage, int offsetX, int width, int type)
+{
+    if (percentage < 0) percentage = 0;
+    if (percentage > 100) percentage = 100;
+    
+    zwApplyColor(type);
+    zwMoveCursor(offsetX);
+    
+    printf("[");
+    int filledWidth = (width * percentage) / 100;
+    for (int i = 0; i < filledWidth; i++) printf("█");
+    for (int i = filledWidth; i < width; i++) printf("░");
+    printf("] %d%%", percentage);
+    fflush(stdout);
+    zwApplyColor(INFO);
+}
+
+// Styled menu item with number and description
+void zwMenuItemStyled(int number, const char *description, int offset, int type)
+{
+    zwApplyColor(type);
+    zwMoveCursor(offset);
+    printf("  ► [%d] %s\n", number, description);
+    fflush(stdout);
+    zwApplyColor(INFO);
+}
+
+// Clear a line at specific Y position
+void zwClearLine(int offsetY)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord = {0, (SHORT)offsetY};
+    SetConsoleCursorPosition(hConsole, coord);
+    
+    int consoleWidth = getConsoleWidth();
+    for (int i = 0; i < consoleWidth; i++) {
+        printf(" ");
+    }
+    SetConsoleCursorPosition(hConsole, coord);
+}

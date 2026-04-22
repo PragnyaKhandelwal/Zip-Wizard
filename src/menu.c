@@ -40,24 +40,30 @@ static void runTimedOperation(const char *operationName, void (*operation)(void)
 // Define the menu function
 void menu() {
     zwClearScreen();
-    zwDrawRule(14, 80, '=', PROCESSING_STATEMENTS);
-    heading("ZIP WIZARD - PROFESSIONAL FILE UTILITY");
-    zwDrawRule(14, 80, '=', PROCESSING_STATEMENTS);
+    printf("\n");
+    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
+    zwPrintCentered("╔═══════════════════════════════════════════════════════════╗", INFO);
+    zwPrintCentered("║          ✨ ZIP WIZARD - PROFESSIONAL FILE UTILITY ✨       ║", SUCCESS);
+    zwPrintCentered("╚═══════════════════════════════════════════════════════════╝", INFO);
+    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
 
-    zwPrint("Choose an operation:", 20, INFO);
-    zwDrawRule(20, 52, '-', INFO);
-    zwPrint("[1] Create File", 22, INFO);
-    zwPrint("[2] Edit File", 22, INFO);
-    zwPrint("[3] Rename File", 22, INFO);
-    zwPrint("[4] Delete File", 22, INFO);
-    zwPrint("[5] File Search", 22, INFO);
-    zwPrint("[6] File Information", 22, INFO);
-    zwPrint("[7] Zip File", 22, INFO);
-    zwPrint("[8] Unzip File", 22, INFO);
-    zwPrint("[9] Exit", 22, INFO);
-    zwDrawRule(20, 52, '-', INFO);
+    printf("\n");
+    zwPrintCentered("📋 CHOOSE AN OPERATION:", INFO);
     printf("\n");
 
+    zwMenuItemStyled(1, "📄 Create File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(2, "✏️  Edit File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(3, "🔄 Rename File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(4, "🗑️  Delete File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(5, "🔍 File Search (KMP)", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(6, "📊 File Information", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(7, "📦 Zip File (LZ77)", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(8, "📂 Unzip File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(9, "🚪 Exit Program", 15, WARNING);
+
+    printf("\n");
+    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
+    printf("\n");
 }
 
 // Define the heading function
@@ -76,49 +82,72 @@ void heading(const char *text) {
 
 // Define the userchoice function
 void userchoice(int n) {
+    printf("\n");
     switch (n) {
     case 1:
-        zwPrint("Creating a file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("📄 Creating a file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Create File", createfile);
         break;
     case 2:
-        zwPrint("Editing the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("✏️  Editing the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Edit File", editfile);
         break;
     case 3:
-        zwPrint("Renaming the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("🔄 Renaming the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Rename File", renamefile);
         break;
     case 4:
-        zwPrint("Deleting the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("🗑️  Deleting the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Delete File", deletefile);
         break;
     case 5:
-        zwPrint("Searching the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("🔍 Searching the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Search File", searchfile);
         break;
     case 6:
-        zwPrint("Fetching file information...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("📊 Fetching file information...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("File Information", fileinfo);
         break;
     case 7:
-        zwPrint("Zipping the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("📦 Zipping the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Zip File", zipfile);
         break;
     case 8:
-        zwPrint("Unzipping the file...\n", 20, PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("📂 Unzipping the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
         runTimedOperation("Unzip File", unzipFile);
         break;
     }
+    printf("\n  ► Press Enter to return to the main menu...");
+    char dummy[10];
+    fgets(dummy, sizeof(dummy), stdin);
 }
 
 // Define the quitProgram function
 void quitProgram() {
     printf("\n");
-    zwPrint("Exiting the program...\n", 20, PROCESSING_STATEMENTS);
-    heading("THANK YOU!!\n");
+    zwPrintCentered("═══════════════════════════════════════════════════════════", INFO);
+    zwPrintCentered("Exiting the program...", PROCESSING_STATEMENTS);
+    zwPrintCentered("Thank you for using ZIP WIZARD! 👋", SUCCESS);
+    zwPrintCentered("═══════════════════════════════════════════════════════════", INFO);
+    printf("\n");
     fileIndexShutdown();
-    exit(0);  // Make sure to include stdlib.h for exit()
+    exit(0);
 }
 
 // Define the validatechoices function
@@ -126,24 +155,34 @@ void quitProgram() {
 void validatechoices() {
     int choice = -1;
 
-    // Prompt for input
-    zwPrintInline("Enter your choice: ", 20, INFO);
+    // Prompt for input - NEW ALIGNED APPROACH
+    printf("\n  ➤ Enter your choice (1-9): ");
+    fflush(stdout);
 
     // Continuously prompt the user until a valid input is entered
     while (1) {
         char input[10];
-        zwReadLine(input, sizeof(input), 39);
+        if (fgets(input, sizeof(input), stdin) == NULL)
+        {
+            zwPrint("Error: Failed to read input.\n", 2, ERROR_FILE);
+            continue;
+        }
+        input[strcspn(input, "\n")] = '\0';
 
         // Check for empty input
         if (strlen(input) == 0) {
-            zwPrint("Error: Input cannot be empty. Please enter a number from the menu.\n", 20, WARNING);
-            continue;  // Skip this iteration and prompt again
+            zwPrint("  ✗ Error: Input cannot be empty. Please enter a number from 1 to 9.\n", 2, WARNING);
+            printf("  ➤ Enter your choice (1-9): ");
+            fflush(stdout);
+            continue;
         }
 
         // Try to convert input to an integer
         if (sscanf(input, "%d", &choice) != 1) {
-            zwPrint("Error: The input must be an integer.\n", 20, ERROR_FILE);
-            continue;  // Skip this iteration and prompt again
+            zwPrint("  ✗ Error: The input must be an integer.\n", 2, ERROR_FILE);
+            printf("  ➤ Enter your choice (1-9): ");
+            fflush(stdout);
+            continue;
         }
 
         // Validate the choice
@@ -156,7 +195,9 @@ void validatechoices() {
             break;  // Exit the loop
         }
         else {
-            zwPrint("Error: Invalid Input! Please enter a number between 1 and 9.\n", 20, WARNING);
+            zwPrint("  ✗ Error: Invalid Input! Please enter a number between 1 and 9.\n", 2, WARNING);
+            printf("  ➤ Enter your choice (1-9): ");
+            fflush(stdout);
         }
     }
 }
