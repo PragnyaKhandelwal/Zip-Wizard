@@ -11,9 +11,9 @@ The codebase is now physically organized for maintainability:
 ```
 Zip-Wizard/
   README.md
-  build.ps1
-  run.ps1
-  smoke-test.ps1
+  build.bat
+  run.bat
+  smoke-test.bat
   .gitignore
   include/
     *.h
@@ -21,27 +21,21 @@ Zip-Wizard/
     *.c
   docs/
     CP_OPTIMIZATION_ROADMAP.md
-  scripts/
-    generate-benchmark-dataset.ps1
-    run-search-benchmark.ps1
-    run-compression-benchmark.ps1
-    run-index-benchmark.ps1
-    generate-milestone5-report.ps1
 ```
 
 ## Build and Run
 
-Open PowerShell in repository root and run:
+Open Command Prompt in repository root and run:
 
-```powershell
-./build.ps1
-./run.ps1
+```bat
+build.bat
+run.bat
 ```
 
 You can also run a smoke test:
 
-```powershell
-./smoke-test.ps1
+```bat
+smoke-test.bat
 ```
 
 ## Feature Set
@@ -67,8 +61,7 @@ See `./docs/CP_OPTIMIZATION_ROADMAP.md` for details.
 
 - Milestone 1 implemented:
   - Timing instrumentation now measures every menu operation and prints elapsed time in milliseconds.
-  - Benchmark dataset generator script added: `./scripts/generate-benchmark-dataset.ps1`.
-  - Search benchmark runner added: `./scripts/run-search-benchmark.ps1`.
+  - Benchmark-friendly timing output is available directly in CLI.
 
 - Milestone 2 implemented:
   - Keyword search now uses Knuth-Morris-Pratt (KMP) matching over file streams instead of `strstr` per line.
@@ -79,14 +72,8 @@ See `./docs/CP_OPTIMIZATION_ROADMAP.md` for details.
 - Implemented rolling-hash + hash-chain-assisted LZ77 matching in compression path.
 - Added benchmark mode to compare naive vs optimized compression:
 
-```powershell
+```bat
 ./zipwizard.exe --benchmark-compress .\benchmark_data\large.txt
-```
-
-- Added convenience runner:
-
-```powershell
-./scripts/run-compression-benchmark.ps1
 ```
 
 - The benchmark prints naive time, optimized time, and computed speedup.
@@ -101,20 +88,13 @@ See `./docs/CP_OPTIMIZATION_ROADMAP.md` for details.
 - Exact name search now uses index lookup (`O(1)` average), while wildcard search keeps filesystem scan behavior.
 - Added index benchmark mode:
 
-```powershell
+```bat
 ./zipwizard.exe --benchmark-index large.txt 10000
-./scripts/run-index-benchmark.ps1
 ```
 
 ## Milestone 5 Status
 
-- Added automated report generation script that runs benchmarks and publishes a CP/PBL-ready report:
-
-```powershell
-./scripts/generate-milestone5-report.ps1
-```
-
-- Report output:
+- Published CP/PBL-ready report:
   - `./docs/BENCHMARK_REPORT.md`
 
 - Includes:

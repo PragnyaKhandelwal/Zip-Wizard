@@ -4,3 +4,5 @@
 cp_smoke.txt
 cp_smoke_renamed.txt
 benchmark_data/
+*.ps1
+scripts/

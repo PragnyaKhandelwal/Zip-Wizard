@@ -53,12 +53,12 @@ Generated at: 2026-04-22 23:21:53
 
 Run these commands from repository root:
 
-```powershell
-./scripts/generate-benchmark-dataset.ps1
-./scripts/run-search-benchmark.ps1
-./scripts/run-compression-benchmark.ps1
-./scripts/run-index-benchmark.ps1
-./scripts/generate-milestone5-report.ps1
+```bat
+build.bat
+run.bat
+zipwizard.exe --benchmark-compress benchmark_data\large.txt
+cd benchmark_data
+..\zipwizard.exe --benchmark-index large.txt 10000
 ```
 
 ## Raw Captured Outputs
