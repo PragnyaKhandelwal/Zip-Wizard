@@ -6,48 +6,43 @@
 
 void lz77Decompress(FILE *compressedFile, FILE *outputFile) {
     int offset, length;
-    char nextChar;
-    char window[WINDOW_SIZE] = {0}; // Sliding window
-    int windowPosition = 0; // Current position in the sliding window
+    unsigned char nextChar; // Match unsigned char type from compression
+    unsigned char window[WINDOW_SIZE] = {0}; // Circular sliding window
+    int windowPos = 0; // Current write/absolute position
 
     // Read until the end of the compressed file
     while (fread(&offset, sizeof(int), 1, compressedFile) == 1 &&
            fread(&length, sizeof(int), 1, compressedFile) == 1 &&
-           fread(&nextChar, sizeof(char), 1, compressedFile) == 1) {
+           fread(&nextChar, sizeof(unsigned char), 1, compressedFile) == 1) {
 
         // Decompress the data from the sliding window
         if (length > 0) {
-            if (offset <= 0 || offset > windowPosition) {
-                fprintf(stderr, "Invalid offset: %d for windowPosition: %d\n", offset, windowPosition);
-                return; // Error handling
+            // Calculate starting read position relative to the absolute window position
+            int readPos = windowPos - offset;
+            
+            // Wrap around if the position points before the start of the buffer
+            while (readPos < 0) {
+                readPos += WINDOW_SIZE;
             }
 
-            // Write the decompressed data from the window
+            // Write the matching sequence
             for (int i = 0; i < length; i++) {
-                char c = window[windowPosition - offset + i];
+                unsigned char c = window[readPos % WINDOW_SIZE];
                 fputc(c, outputFile);
-                window[windowPosition++] = c; // Update the window
-
-                // Manage window size
-                if (windowPosition >= WINDOW_SIZE) {
-                    memmove(window, window + windowPosition - WINDOW_SIZE, WINDOW_SIZE);
-                    windowPosition = WINDOW_SIZE; // Adjust position after moving
-                }
+                
+                // Add to the current write position in the bounds of the window
+                window[windowPos % WINDOW_SIZE] = c;
+                windowPos++;
+                readPos++;
             }
         }
 
-        // Write the next character to the output
+        // Write the next literal character to the output
         fputc(nextChar, outputFile);
-        window[windowPosition++] = nextChar; // Update the window
-
-        // Manage window size again after adding nextChar
-        if (windowPosition >= WINDOW_SIZE) {
-            memmove(window, window + windowPosition - WINDOW_SIZE, WINDOW_SIZE);
-            windowPosition = WINDOW_SIZE; // Adjust position after moving
-        }
+        window[windowPos % WINDOW_SIZE] = nextChar;
+        windowPos++;
     }
 }
-
 void unzipFile() {
     char compressedFileName[MAX_FILE_NAME_LENGTH + 1];
     char outputFileName[MAX_FILE_NAME_LENGTH + 1];
