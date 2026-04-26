@@ -3,5 +3,6 @@
 
 // Function to provide info of the file
 void fileinfo();
+int fileinfoNonInteractive(const char *fileName);
 
 #endif // FILEINFO_H

@@ -23,6 +23,15 @@
 int outputCount = 0;  // Output counter
 char outputLog[MAX_OUTPUT_LINES][100];  // Output log array
 
+typedef struct OperationTelemetry {
+    unsigned long totalOps;
+    unsigned long successOps;
+    unsigned long failedOps;
+    double totalMs;
+} OperationTelemetry;
+
+static OperationTelemetry g_telemetry = {0, 0, 0, 0.0};
+
 static void runTimedOperation(const char *operationName, void (*operation)(void)) {
     LARGE_INTEGER start, end, frequency;
     char timingMessage[160];
@@ -35,6 +44,14 @@ static void runTimedOperation(const char *operationName, void (*operation)(void)
     double elapsedMs = ((double)(end.QuadPart - start.QuadPart) * 1000.0) / (double)frequency.QuadPart;
     snprintf(timingMessage, sizeof(timingMessage), "[Timing] %s completed in %.3f ms", operationName, elapsedMs);
     zwPrint(timingMessage, 20, INFO);
+
+    g_telemetry.totalOps++;
+    g_telemetry.totalMs += elapsedMs;
+    if (zwGetLastOperationStatus() == 0) {
+        g_telemetry.successOps++;
+    } else {
+        g_telemetry.failedOps++;
+    }
 }
 
 // Define the menu function
@@ -42,24 +59,24 @@ void menu() {
     zwClearScreen();
     printf("\n");
     zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
-    zwPrintCentered("╔═══════════════════════════════════════════════════════════╗", INFO);
-    zwPrintCentered("║          ✨ ZIP WIZARD - PROFESSIONAL FILE UTILITY ✨       ║", SUCCESS);
-    zwPrintCentered("╚═══════════════════════════════════════════════════════════╝", INFO);
+    zwPrintCentered("+-----------------------------------------------------------+", INFO);
+    zwPrintCentered("|          ZIP WIZARD - PROFESSIONAL FILE UTILITY          |", SUCCESS);
+    zwPrintCentered("+-----------------------------------------------------------+", INFO);
     zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
 
     printf("\n");
-    zwPrintCentered("📋 CHOOSE AN OPERATION:", INFO);
+    zwPrintCentered("CHOOSE AN OPERATION:", INFO);
     printf("\n");
 
-    zwMenuItemStyled(1, "📄 Create File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(2, "✏️  Edit File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(3, "🔄 Rename File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(4, "🗑️  Delete File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(5, "🔍 File Search (KMP)", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(6, "📊 File Information", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(7, "📦 Zip File (LZ77)", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(8, "📂 Unzip File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(9, "🚪 Exit Program", 15, WARNING);
+    zwMenuItemStyled(1, "Create File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(2, "Edit File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(3, "Rename File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(4, "Delete File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(5, "File Search (KMP)", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(6, "File Information", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(7, "Zip File (LZ77)", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(8, "Unzip File", 15, PROCESSING_STATEMENTS);
+    zwMenuItemStyled(9, "Exit Program", 15, WARNING);
 
     printf("\n");
     zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
@@ -85,55 +102,55 @@ void userchoice(int n) {
     printf("\n");
     switch (n) {
     case 1:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("📄 Creating a file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Creating a file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Create File", createfile);
         break;
     case 2:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("✏️  Editing the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Editing the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Edit File", editfile);
         break;
     case 3:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("🔄 Renaming the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Renaming the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Rename File", renamefile);
         break;
     case 4:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("🗑️  Deleting the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Deleting the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Delete File", deletefile);
         break;
     case 5:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("🔍 Searching the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Searching the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Search File", searchfile);
         break;
     case 6:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("📊 Fetching file information...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Fetching file information...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("File Information", fileinfo);
         break;
     case 7:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("📦 Zipping the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Zipping the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Zip File", zipfile);
         break;
     case 8:
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
-        zwPrintCentered("📂 Unzipping the file...", PROCESSING_STATEMENTS);
-        zwPrintCentered("──────────────────────────────────────────────────────────", INFO);
+        zwPrintCentered("----------------------------------------------------------", INFO);
+        zwPrintCentered("Unzipping the file...", PROCESSING_STATEMENTS);
+        zwPrintCentered("----------------------------------------------------------", INFO);
         runTimedOperation("Unzip File", unzipFile);
         break;
     }
-    printf("\n  ► Press Enter to return to the main menu...");
+    printf("\n  Press Enter to return to the main menu...");
     char dummy[10];
     fgets(dummy, sizeof(dummy), stdin);
 }
@@ -141,10 +158,20 @@ void userchoice(int n) {
 // Define the quitProgram function
 void quitProgram() {
     printf("\n");
-    zwPrintCentered("═══════════════════════════════════════════════════════════", INFO);
+    zwPrintCentered("===========================================================", INFO);
     zwPrintCentered("Exiting the program...", PROCESSING_STATEMENTS);
-    zwPrintCentered("Thank you for using ZIP WIZARD! 👋", SUCCESS);
-    zwPrintCentered("═══════════════════════════════════════════════════════════", INFO);
+    zwPrintCentered("Thank you for using ZIP WIZARD!", SUCCESS);
+    if (g_telemetry.totalOps > 0) {
+        char summary1[180];
+        char summary2[180];
+        double avg = g_telemetry.totalMs / (double)g_telemetry.totalOps;
+        snprintf(summary1, sizeof(summary1), "Telemetry: total=%lu success=%lu failed=%lu",
+            g_telemetry.totalOps, g_telemetry.successOps, g_telemetry.failedOps);
+        snprintf(summary2, sizeof(summary2), "Average operation time: %.3f ms", avg);
+        zwPrintCentered(summary1, INFO);
+        zwPrintCentered(summary2, INFO);
+    }
+    zwPrintCentered("===========================================================", INFO);
     printf("\n");
     fileIndexShutdown();
     exit(0);

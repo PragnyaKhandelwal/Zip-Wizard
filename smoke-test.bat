@@ -8,11 +8,14 @@ if errorlevel 1 exit /b 1
   echo 1
   echo smoke_test.txt
   echo hello smoke
+  echo.
   echo 3
   echo smoke_test.txt
   echo smoke_test_renamed.txt
+  echo.
   echo 4
   echo smoke_test_renamed.txt
+  echo.
   echo 9
 ) | zipwizard.exe >nul
 

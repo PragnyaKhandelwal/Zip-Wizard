@@ -2,60 +2,67 @@
 #include "fileIndex.h"
 #include "Utils.h"
 
+int renamefileNonInteractive(const char *oldName, const char *newName)
+{
+    char err[160];
+
+    if (!zwValidateFileName(oldName, err, sizeof(err)))
+    {
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!zwValidateFileName(newName, err, sizeof(err)))
+    {
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!zwHasTxtExtension(oldName) || !zwHasTxtExtension(newName))
+    {
+        zwPrint("Both file names must end with .txt", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!fileIndexContains(oldName))
+    {
+        zwPrint("Source file does not exist.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (fileIndexContains(newName))
+    {
+        zwPrint("Destination file already exists.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (rename(oldName, newName) != 0)
+    {
+        zwPrint("Error renaming file", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    fileIndexRename(oldName, newName);
+    zwSetLastOperationStatus(0);
+    return 0;
+}
+
 void renamefile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char new_file_name[100];
-    zwPrintInline("Current file name: ", 20, INFO);
-    zwReadLine(file_name, sizeof(file_name), 39);
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
-    {
-        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
-    }
-   
-    if (strlen(file_name) == 0)
-    {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
-        return;
-    }
-    if (fileIndexContains(file_name))
-    {
-        zwPrintInline("New file name: ", 20, INFO);
-        zwReadLine(new_file_name, sizeof(new_file_name), 35);
-        if (strlen(new_file_name) > MAX_FILE_NAME_LENGTH)
-        {
-            zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
-            return;
-        }
-        if (strstr(new_file_name, ".txt") == NULL)
-        {
-            zwPrint("Error: File name must end with .txt extension.\n", 20, ERROR_FILE);
-            return;
-        }
-        if (strlen(new_file_name) == 0)
-        {
-            zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
-            return;
-        }
 
-        if (fileIndexContains(new_file_name))
-        {
-            zwPrint("Error: Destination file already exists.\n", 20, ERROR_FILE);
-            return;
-        }
-    }
-    else
+    zwPromptInput("  [RENAME] Current file name: ", file_name, sizeof(file_name), INFO);
+    zwPromptInput("  [RENAME] New file name: ", new_file_name, sizeof(new_file_name), INFO);
+
+    if (renamefileNonInteractive(file_name, new_file_name) == 0)
     {
-        zwPrint("Error: file does not exist.\n", 20, ERROR_FILE);
-        return;
-    }
-    if (rename(file_name, new_file_name) == 0)
-    {
-        fileIndexRename(file_name, new_file_name);
-        zwPrint("File renamed successfully.\n", 20, SUCCESS);
-    }
-    else
-    {
-        zwPrint("Error renaming file\n", 20, ERROR_FILE);
+        zwPrint("File renamed successfully.", 2, SUCCESS);
     }
 }

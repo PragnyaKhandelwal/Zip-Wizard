@@ -43,45 +43,82 @@ void lz77Decompress(FILE *compressedFile, FILE *outputFile) {
         windowPos++;
     }
 }
-void unzipFile() {
-    char compressedFileName[MAX_FILE_NAME_LENGTH + 1];
-    char outputFileName[MAX_FILE_NAME_LENGTH + 1];
 
-    // Get the name of the compressed file from the user
-    zwPrintInline("Compressed file (.zip): ", 20, INFO);
-    zwReadLine(compressedFileName, sizeof(compressedFileName), 44);
+int unzipFilePath(const char *compressedFileName, const char *outputFileName) {
+    FILE *compressedFile;
+    FILE *outputFile;
+    char derivedOutput[MAX_FILE_NAME_LENGTH + 16];
+    char *zipExtension;
 
-    // Generate the output file name by removing the .zip extension and appending _output.txt
-    char *zipExtension = strstr(compressedFileName, ".zip");
-    if (zipExtension) {
-        size_t prefixLength = zipExtension - compressedFileName;
-        snprintf(outputFileName, sizeof(outputFileName), "%.*s_output.txt", (int)prefixLength, compressedFileName);
-    } else {
-        // If no ".zip" is found, just append "_output.txt" to the input file name
-        snprintf(outputFileName, sizeof(outputFileName), "%s_output.txt", compressedFileName);
+    if (!compressedFileName || strlen(compressedFileName) == 0) {
+        printf("Error: compressed file path is empty.\n");
+        return 1;
     }
 
-    // Open the compressed file
-    FILE *compressedFile = fopen(compressedFileName, "rb");
+    if (!outputFileName || strlen(outputFileName) == 0) {
+        zipExtension = strstr(compressedFileName, ".zip");
+        if (zipExtension) {
+            size_t prefixLength = (size_t)(zipExtension - compressedFileName);
+            snprintf(derivedOutput, sizeof(derivedOutput), "%.*s_output.txt", (int)prefixLength, compressedFileName);
+        } else {
+            snprintf(derivedOutput, sizeof(derivedOutput), "%s_output.txt", compressedFileName);
+        }
+        outputFileName = derivedOutput;
+    }
+
+    compressedFile = fopen(compressedFileName, "rb");
     if (!compressedFile) {
-        zwPrint("Error: Unable to open compressed file for reading.\n", 20, ERROR_FILE);
-        return;
+        printf("Error: Unable to open compressed file for reading.\n");
+        return 1;
     }
 
-    // Open the output file for writing
-    FILE *outputFile = fopen(outputFileName, "wb");
+    outputFile = fopen(outputFileName, "wb");
     if (!outputFile) {
-        zwPrint("Error: Unable to open output file for writing.\n", 20, ERROR_FILE);
         fclose(compressedFile);
-        return;
+        printf("Error: Unable to open output file for writing.\n");
+        return 1;
     }
 
-    // Call decompression function
     lz77Decompress(compressedFile, outputFile);
 
-    // Close the files
     fclose(compressedFile);
     fclose(outputFile);
+    printf("Unzipped: %s -> %s\n", compressedFileName, outputFileName);
+    return 0;
+}
 
-    zwPrint("File decompressed successfully\n", 20, SUCCESS);
+int batchUnzipFiles(int count, const char *files[]) {
+    int success = 0;
+    int failed = 0;
+
+    if (count <= 0 || !files) {
+        return 1;
+    }
+
+    for (int i = 0; i < count; i++) {
+        int progress = ((i + 1) * 100) / count;
+        zwDrawProgressBar(progress, 2, 40, PROCESSING_STATEMENTS);
+        printf("\n");
+
+        if (unzipFilePath(files[i], NULL) == 0) {
+            success++;
+        } else {
+            failed++;
+        }
+    }
+
+    printf("Batch unzip summary: total=%d success=%d failed=%d\n", count, success, failed);
+    return failed == 0 ? 0 : 1;
+}
+
+void unzipFile() {
+    char compressedFileName[MAX_FILE_NAME_LENGTH + 1];
+
+    zwPromptInput("  [UNZIP] Compressed file (.zip): ", compressedFileName, sizeof(compressedFileName), INFO);
+    if (unzipFilePath(compressedFileName, NULL) == 0) {
+        zwPrint("File decompressed successfully", 2, SUCCESS);
+        zwSetLastOperationStatus(0);
+    } else {
+        zwSetLastOperationStatus(1);
+    }
 }

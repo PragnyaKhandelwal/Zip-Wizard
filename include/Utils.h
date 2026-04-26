@@ -49,4 +49,10 @@ void zwMenuItemStyled(int number, const char *description, int offset, int type)
 // Clear line at specific position
 void zwClearLine(int offsetY);
 
+// Operation status and validation helpers
+void zwSetLastOperationStatus(int status);
+int zwGetLastOperationStatus(void);
+int zwValidateFileName(const char *fileName, char *errorBuf, size_t errorSize);
+int zwHasTxtExtension(const char *fileName);
+
 #endif

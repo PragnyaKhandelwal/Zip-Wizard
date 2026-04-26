@@ -6,105 +6,83 @@
 #define GetFileExInfoBasic 0
 #endif
 
+int fileinfoNonInteractive(const char *fileName)
+{
+    char file_path[MAX_FILE_NAME_LENGTH + 2];
+    char err[160];
+
+    if (!zwValidateFileName(fileName, err, sizeof(err)))
+    {
+        printf("%s\n", err);
+        return 1;
+    }
+
+    snprintf(file_path, sizeof(file_path), "%s", fileName);
+    if (!fileIndexContains(file_path))
+    {
+        printf("Error: file does not exist or could not be opened.\n");
+        return 1;
+    }
+
+    FILE *file = fopen(file_path, "r");
+    if (!file)
+    {
+        printf("Error: file does not exist or could not be opened.\n");
+        return 1;
+    }
+
+    WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+    if (GetFileAttributesEx(file_path, GetFileExInfoBasic, &fileInfo))
+    {
+        char fullPath[MAX_PATH];
+        char attributes[256] = "Attributes: ";
+        FILETIME localCreationTime, localAccessTime, localWriteTime;
+        SYSTEMTIME creationTime, accessTime, writeTime;
+
+        if (GetFullPathName(file_path, MAX_PATH, fullPath, NULL) > 0)
+        {
+            printf("%s\n", fullPath);
+        }
+
+        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) strcat(attributes, "Directory ");
+        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) strcat(attributes, "Read-Only ");
+        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) strcat(attributes, "Hidden ");
+        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) strcat(attributes, "System ");
+        if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) strcat(attributes, "Archive ");
+        printf("%s\n", attributes);
+
+        FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &localCreationTime);
+        FileTimeToLocalFileTime(&fileInfo.ftLastAccessTime, &localAccessTime);
+        FileTimeToLocalFileTime(&fileInfo.ftLastWriteTime, &localWriteTime);
+        FileTimeToSystemTime(&localCreationTime, &creationTime);
+        FileTimeToSystemTime(&localAccessTime, &accessTime);
+        FileTimeToSystemTime(&localWriteTime, &writeTime);
+
+        printf("Created: %02d/%02d/%d %02d:%02d:%02d\n",
+            creationTime.wDay, creationTime.wMonth, creationTime.wYear,
+            creationTime.wHour, creationTime.wMinute, creationTime.wSecond);
+        printf("Last Accessed: %02d/%02d/%d %02d:%02d:%02d\n",
+            accessTime.wDay, accessTime.wMonth, accessTime.wYear,
+            accessTime.wHour, accessTime.wMinute, accessTime.wSecond);
+        printf("Last Modified: %02d/%02d/%d %02d:%02d:%02d\n",
+            writeTime.wDay, writeTime.wMonth, writeTime.wYear,
+            writeTime.wHour, writeTime.wMinute, writeTime.wSecond);
+    }
+
+    fclose(file);
+    return 0;
+}
+
 void fileinfo()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
-    zwPrintInline("File name for info: ", 20, INFO);
-    zwReadLine(file_name, sizeof(file_name), 40);
-   
-    if (strlen(file_name) == 0)
-    {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
-        return;
-    }
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
-    {
-        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
-        return;
-    }
-    // Construct the full file path
-    char file_path[MAX_FILE_NAME_LENGTH + 2];
-    snprintf(file_path, sizeof(file_path), "%s", file_name);
+    zwPromptInput("  [INFO] File name for info: ", file_name, sizeof(file_name), INFO);
 
-    if (!fileIndexContains(file_path))
+    if (fileinfoNonInteractive(file_name) != 0)
     {
-        zwPrint("Error: file does not exist or could not be opened.\n", 20, ERROR_FILE);
+        zwSetLastOperationStatus(1);
         return;
     }
 
-    // Attempt to open the file
-    FILE *file = fopen(file_path, "r");
-    if (file)
-    {
-        WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-        if (GetFileAttributesEx(file_path, GetFileExInfoBasic, &fileInfo))
-        {
-            char fullPath[MAX_PATH];
-            if (GetFullPathName(file_path, MAX_PATH, fullPath, NULL) > 0)
-            {
-                zwPrint(fullPath, 20, INFO);
-            }
-
-            // Prepare output strings for attributes
-            char attributes[256] = "Attributes: ";
-            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            {
-                strcat(attributes, "Directory ");
-            }
-            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-            {
-                strcat(attributes, "Read-Only ");
-            }
-            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
-            {
-                strcat(attributes, "Hidden ");
-            }
-            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)
-            {
-                strcat(attributes, "System ");
-            }
-            if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE)
-            {
-                strcat(attributes, "Archive ");
-            }
-
-            // Print attributes
-            zwPrint(attributes, 20, INFO);
-
-            // Retrieve and print timestamps
-            FILETIME localCreationTime, localAccessTime, localWriteTime;
-            SYSTEMTIME creationTime, accessTime, writeTime;
-
-            FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &localCreationTime);
-            FileTimeToLocalFileTime(&fileInfo.ftLastAccessTime, &localAccessTime);
-            FileTimeToLocalFileTime(&fileInfo.ftLastWriteTime, &localWriteTime);
-
-            FileTimeToSystemTime(&localCreationTime, &creationTime);
-            FileTimeToSystemTime(&localAccessTime, &accessTime);
-            FileTimeToSystemTime(&localWriteTime, &writeTime);
-
-            char created[256], accessed[256], modified[256];
-            sprintf(created, "Created: %02d/%02d/%d %02d:%02d:%02d",
-                    creationTime.wDay, creationTime.wMonth, creationTime.wYear,
-                    creationTime.wHour, creationTime.wMinute, creationTime.wSecond);
-
-            sprintf(accessed, "Last Accessed: %02d/%02d/%d %02d:%02d:%02d",
-                    accessTime.wDay, accessTime.wMonth, accessTime.wYear,
-                    accessTime.wHour, accessTime.wMinute, accessTime.wSecond);
-
-            sprintf(modified, "Last Modified: %02d/%02d/%d %02d:%02d:%02d",
-                    writeTime.wDay, writeTime.wMonth, writeTime.wYear,
-                    writeTime.wHour, writeTime.wMinute, writeTime.wSecond);
-
-            // Print timestamps
-            zwPrint(created, 20, INFO);
-            zwPrint(accessed, 20, INFO);
-            zwPrint(modified, 20, INFO);
-        }
-        fclose(file);
-    }
-    else
-    {
-        zwPrint("Error: file does not exist or could not be opened.\n", 20, ERROR_FILE);
-    }
+    zwSetLastOperationStatus(0);
 }

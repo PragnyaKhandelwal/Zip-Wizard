@@ -38,6 +38,12 @@ You can also run a smoke test:
 smoke-test.bat
 ```
 
+Run LZ77 roundtrip tests:
+
+```bat
+run-lz77-tests.bat
+```
+
 ## Feature Set
 
 - File operations: create, edit, rename, delete.
@@ -45,6 +51,31 @@ smoke-test.bat
 - File metadata: full path, attributes, and timestamps.
 - Compression/decompression: LZ77-based zip/unzip workflow.
 - CLI UX: menu-driven interaction with input validation.
+- Non-interactive CLI mode for automation.
+- Batch zip/unzip with progress and summary.
+- Telemetry summary on exit (total/success/failure/avg-time).
+
+## Non-Interactive Command Mode
+
+```bat
+zipwizard.exe --create demo.txt "hello"
+zipwizard.exe --edit demo.txt "another line"
+zipwizard.exe --rename demo.txt demo2.txt
+zipwizard.exe --delete demo2.txt
+
+zipwizard.exe --zip input.txt
+zipwizard.exe --zip input.txt out.zip
+zipwizard.exe --unzip out.zip
+zipwizard.exe --unzip out.zip restored.txt
+
+zipwizard.exe --batch-zip a.txt b.txt c.txt
+zipwizard.exe --batch-unzip a.zip b.zip c.zip
+
+zipwizard.exe --search --keyword algorithm --ext txt --ignore-case
+zipwizard.exe --search --keyword "*error*" --ext log --regex
+
+zipwizard.exe --info sample.txt
+```
 
 ## CP/PBL Alignment
 
@@ -105,8 +136,8 @@ See `./docs/CP_OPTIMIZATION_ROADMAP.md` for details.
 
 ## Recommended Next Enhancements
 
-1. Add benchmark mode (`--benchmark`) with timing output for each operation.
-2. Add non-interactive CLI flags (`--zip`, `--unzip`, `--search`) for automation.
-3. Introduce index caching to speed up repeated searches.
-4. Upgrade compression matching with rolling hash for better performance.
-5. Add regression tests for stable behavior under larger inputs.
+1. Add recursive directory search mode (`--recursive`).
+2. Add JSON output mode for automation (`--json`).
+3. Add configurable compression levels and presets.
+4. Add undo/rollback support for rename/delete via shadow log.
+5. Add performance trend report from benchmark runs.

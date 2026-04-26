@@ -2,6 +2,51 @@
 #include "fileIndex.h"
 #include "Utils.h"
 
+int createfileNonInteractive(const char *fileName, const char *content)
+{
+    FILE *file;
+    char err[160];
+
+    if (!zwValidateFileName(fileName, err, sizeof(err)))
+    {
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!zwHasTxtExtension(fileName))
+    {
+        zwPrint("File name must end with .txt", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (fileIndexContains(fileName))
+    {
+        zwPrint("File already exists. Choose a different name.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    file = fopen(fileName, "w");
+    if (!file)
+    {
+        zwPrint("Error creating file.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (content)
+    {
+        fprintf(file, "%s", content);
+    }
+
+    fclose(file);
+    fileIndexAdd(fileName);
+    zwSetLastOperationStatus(0);
+    return 0;
+}
+
 void createfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
@@ -10,36 +55,10 @@ void createfile()
     printf("\n");
     zwPromptInput("  [CREATE] File name (.txt): ", file_name, sizeof(file_name), INFO);
 
-    // Check if the file name is empty
-    if (strlen(file_name) == 0)
-    {
-        zwPrint("  [ERROR] File name cannot be empty.", 2, ERROR_FILE);
-        return;
-    }
-
-    // Check if the file name is too long
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
-    {
-        zwPrint("  [ERROR] File name is too long. Maximum length is 99 characters.", 2, ERROR_FILE);
-        return;
-    }
-    // Check if the file already exists (hash index lookup)
-    if (fileIndexContains(file_name))
-    {
-        zwPrint("  [ERROR] File already exists. Choose a different name.", 2, ERROR_FILE);
-        return;
-    }
-
-    FILE *file = fopen(file_name, "w");
-    if (file == NULL)
-    {
-        zwPrint("  [ERROR] Error in creating the file", 2, ERROR_FILE);
-        return;
-    }
-
     zwPromptInput("  [CONTENT] Initial content: ", file_content, sizeof(file_content), INFO);
-    fprintf(file, "%s", file_content);
-    fclose(file);
-    fileIndexAdd(file_name);
-    zwPrint("  [SUCCESS] Your file has been created successfully!", 2, SUCCESS);
+
+    if (createfileNonInteractive(file_name, file_content) == 0)
+    {
+        zwPrint("  [SUCCESS] Your file has been created successfully!", 2, SUCCESS);
+    }
 }

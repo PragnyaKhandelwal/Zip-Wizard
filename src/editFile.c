@@ -2,46 +2,84 @@
 #include "Utils.h"
 #include "editFile.h"
 
+int editfileNonInteractive(const char *fileName, const char *appendContent)
+{
+    FILE *file;
+    char err[160];
+
+    if (!zwValidateFileName(fileName, err, sizeof(err)))
+    {
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!zwHasTxtExtension(fileName))
+    {
+        zwPrint("File name must end with .txt", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    file = fopen(fileName, "a");
+    if (!file)
+    {
+        zwPrint("Error opening file for editing.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (appendContent)
+    {
+        fprintf(file, "%s\n", appendContent);
+    }
+
+    fclose(file);
+    zwSetLastOperationStatus(0);
+    return 0;
+}
+
 void editfile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
     char file_content[MAX_CONTENT_LENGTH + 1];
-    zwPrintInline("File to edit (.txt): ", 20, INFO);
-    zwReadLine(file_name, sizeof(file_name), 40);
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
+    char err[160];
+
+    zwPromptInput("  [EDIT] File to edit (.txt): ", file_name, sizeof(file_name), INFO);
+
+    if (!zwValidateFileName(file_name, err, sizeof(err)))
     {
-        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
-    }
-    if (strlen(file_name) == 0)
-    {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
         return;
     }
+
+    if (!zwHasTxtExtension(file_name))
+    {
+        zwPrint("File name must end with .txt", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return;
+    }
+
     FILE *file = fopen(file_name, "r");
     if (file == NULL)
     {
-        printf("\n");
-        zwPrint("Error: File does not exist.\n", 20, ERROR_FILE);
+        zwPrint("Error: File does not exist.", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
         return;
     }
     printf("\n");
-    zwPrint("The current content of the file:", 20, INFO);
+    zwPrint("Current content of the file:", 2, INFO);
     while (fgets(file_content, sizeof(file_content), file))
     {
         printf("%s\n", file_content);
     }
     fclose(file);
     printf("\n");
-    zwPrintInline("Append content: ", 20, INFO);
-    zwReadLine(file_content, sizeof(file_content), 36);
-    file = fopen(file_name, "a");
-    if (file == NULL)
+    zwPromptInput("  [EDIT] Append content: ", file_content, sizeof(file_content), INFO);
+
+    if (editfileNonInteractive(file_name, file_content) == 0)
     {
-        zwPrint("Error opening file for editing.\n", 20, ERROR_FILE);
-        return;
+        zwPrint("File updated successfully!", 2, SUCCESS);
     }
-    fprintf(file, "%s\n", file_content);
-    fclose(file);
-    printf("\n");
-    zwPrint("File updated successfully!\n", 20, SUCCESS);
 }

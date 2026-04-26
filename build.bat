@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 where gcc >nul 2>nul
 if errorlevel 1 (
@@ -7,7 +7,15 @@ if errorlevel 1 (
   exit /b 1
 )
 
-gcc src\*.c -I include -Wall -Wextra -O2 -o zipwizard.exe
+set SRCS=
+for %%f in (src\*.c) do (
+  echo %%~nxf | findstr /i /c:"lz77_test.c" >nul
+  if errorlevel 1 (
+    set SRCS=!SRCS! %%f
+  )
+)
+
+gcc !SRCS! -I include -Wall -Wextra -O2 -o zipwizard.exe
 if errorlevel 1 (
   echo [ERROR] Build failed.
   exit /b 1

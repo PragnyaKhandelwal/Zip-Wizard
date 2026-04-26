@@ -259,54 +259,94 @@ static int runCompressionWithMatcher(FILE *inputFile, FILE *outputFile, FindBest
     return ok;
 }
 
-static void printCompressionStats(const char *label, const CompressionStats *stats) {
-    char message[220];
-    size_t compressedBytes = stats->tokenCount * (sizeof(int) * 2 + sizeof(unsigned char));
-    double ratio = (stats->inputBytes > 0) ? ((double)compressedBytes / (double)stats->inputBytes) : 0.0;
+int zipFilePath(const char *inputFileName, const char *outputZipName) {
+    FILE *inputFile;
+    FILE *zipOut;
+    CompressionStats stats;
+    char autoOutput[MAX_FILE_NAME_LENGTH + 8];
+    const char *target;
+    char err[160];
 
-    snprintf(
-        message,
-        sizeof(message),
-        "[%s] input=%lu bytes, tokens=%lu, encoded=%lu bytes, ratio=%.3f, time=%.3f ms",
-        label,
-        (unsigned long)stats->inputBytes,
-        (unsigned long)stats->tokenCount,
-        (unsigned long)compressedBytes,
-        ratio,
-        stats->elapsedMs);
-    zwPrint(message, 20, INFO);
+    if (!zwValidateFileName(inputFileName, err, sizeof(err))) {
+        printf("%s\n", err);
+        return 1;
+    }
+
+    if (!zwHasTxtExtension(inputFileName)) {
+        printf("Input file must end with .txt\n");
+        return 1;
+    }
+
+    if (!outputZipName || strlen(outputZipName) == 0) {
+        snprintf(autoOutput, sizeof(autoOutput), "%s.zip", inputFileName);
+        target = autoOutput;
+    } else {
+        target = outputZipName;
+    }
+
+    inputFile = fopen(inputFileName, "rb");
+    if (!inputFile) {
+        printf("Error: unable to open input file for zipping.\n");
+        return 1;
+    }
+
+    zipOut = fopen(target, "wb");
+    if (!zipOut) {
+        fclose(inputFile);
+        printf("Error: unable to open output zip file.\n");
+        return 1;
+    }
+
+    if (!runCompressionWithMatcher(inputFile, zipOut, findBestMatchHashChain, &stats)) {
+        fclose(inputFile);
+        fclose(zipOut);
+        printf("Error: compression failed.\n");
+        return 1;
+    }
+
+    fclose(inputFile);
+    fclose(zipOut);
+
+    printf("Zipped: %s -> %s\n", inputFileName, target);
+    printf("Compression: tokens=%lu, time=%.3f ms\n", (unsigned long)stats.tokenCount, stats.elapsedMs);
+    return 0;
+}
+
+int batchZipFiles(int count, const char *files[]) {
+    int success = 0;
+    int failed = 0;
+
+    if (count <= 0 || !files) {
+        return 1;
+    }
+
+    for (int i = 0; i < count; i++) {
+        int progress = ((i + 1) * 100) / count;
+        zwDrawProgressBar(progress, 2, 40, PROCESSING_STATEMENTS);
+        printf("\n");
+
+        if (zipFilePath(files[i], NULL) == 0) {
+            success++;
+        } else {
+            failed++;
+        }
+    }
+
+    printf("Batch zip summary: total=%d success=%d failed=%d\n", count, success, failed);
+    return failed == 0 ? 0 : 1;
 }
 
 void zipfile() {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
-    char compressed_file[MAX_FILE_NAME_LENGTH + 1];
 
-    zwPrintInline("File to zip: ", 20, INFO);
-    zwReadLine(file_name, sizeof(file_name), 33);
+    zwPromptInput("  [ZIP] File to zip: ", file_name, sizeof(file_name), INFO);
 
-    snprintf(compressed_file, sizeof(compressed_file), "%s.zip", file_name);
-    FILE *fileName = fopen(file_name, "rb");
-    FILE *zipFile = fopen(compressed_file, "wb");
-
-    if (!fileName || !zipFile) {
-        zwPrint("Error: Unable to open files for zipping.\n", 20, ERROR_FILE);
-        if (fileName) fclose(fileName);
-        return;
+    if (zipFilePath(file_name, NULL) == 0) {
+        zwPrint("File zipped successfully.", 2, SUCCESS);
+        zwSetLastOperationStatus(0);
+    } else {
+        zwSetLastOperationStatus(1);
     }
-
-    CompressionStats stats;
-    if (!runCompressionWithMatcher(fileName, zipFile, findBestMatchHashChain, &stats)) {
-        zwPrint("Error: Compression failed due to memory constraints.\n", 20, ERROR_FILE);
-        fclose(fileName);
-        fclose(zipFile);
-        return;
-    }
-
-    fclose(fileName);
-    fclose(zipFile);
-
-    zwPrint("File zipped successfully.\n", 20, SUCCESS);
-    printCompressionStats("LZ77-HashChain", &stats);
 }
 
 int benchmarkCompressionAlgorithms(const char *inputFileName) {

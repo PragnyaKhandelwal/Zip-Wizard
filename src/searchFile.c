@@ -1,6 +1,7 @@
 #include "Utils.h"
 #include "searchFile.h"
 #include "fileIndex.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,20 +67,167 @@ static int fileContainsKeywordKmp(FILE *file, const char *keyword) {
     return 0;
 }
 
+static int fileContainsKeywordKmpCaseInsensitive(FILE *file, const char *keyword) {
+    int keywordLength = (int)strlen(keyword);
+    int *lps;
+    char loweredKeyword[MAX_KEYWORD_LENGTH];
+    char buffer[4096];
+    size_t bytesRead;
+    int matchedChars = 0;
+
+    if (keywordLength <= 0 || keywordLength >= MAX_KEYWORD_LENGTH) {
+        return 0;
+    }
+
+    for (int i = 0; i < keywordLength; i++) {
+        loweredKeyword[i] = (char)tolower((unsigned char)keyword[i]);
+    }
+    loweredKeyword[keywordLength] = '\0';
+
+    lps = (int *)malloc((size_t)keywordLength * sizeof(int));
+    if (!lps) {
+        return 0;
+    }
+
+    buildLpsArray(loweredKeyword, keywordLength, lps);
+
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        for (size_t i = 0; i < bytesRead; i++) {
+            char c = (char)tolower((unsigned char)buffer[i]);
+            while (matchedChars > 0 && loweredKeyword[matchedChars] != c) {
+                matchedChars = lps[matchedChars - 1];
+            }
+
+            if (loweredKeyword[matchedChars] == c) {
+                matchedChars++;
+                if (matchedChars == keywordLength) {
+                    free(lps);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    free(lps);
+    return 0;
+}
+
+static int wildcardMatch(const char *text, const char *pattern, int caseInsensitive) {
+    while (*pattern) {
+        if (*pattern == '*') {
+            pattern++;
+            if (!*pattern) {
+                return 1;
+            }
+            while (*text) {
+                if (wildcardMatch(text, pattern, caseInsensitive)) {
+                    return 1;
+                }
+                text++;
+            }
+            return 0;
+        }
+
+        if (*pattern == '?' ||
+            (caseInsensitive
+                ? (tolower((unsigned char)*pattern) == tolower((unsigned char)*text))
+                : (*pattern == *text))) {
+            if (!*text) {
+                return 0;
+            }
+            pattern++;
+            text++;
+            continue;
+        }
+        return 0;
+    }
+
+    return *text == '\0';
+}
+
+static int fileContainsWildcardPattern(FILE *file, const char *pattern, int caseInsensitive) {
+    char line[4096];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        char *start = line;
+        while (*start) {
+            if (wildcardMatch(start, pattern, caseInsensitive)) {
+                return 1;
+            }
+            start++;
+        }
+    }
+    return 0;
+}
+
+int searchKeywordAdvanced(const char *keyword, const char *extensionFilter, int caseInsensitive, int useRegex) {
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind;
+    char pattern[32];
+    int found = 0;
+    int tested = 0;
+
+    if (!keyword || strlen(keyword) == 0) {
+        printf("Error: keyword cannot be empty.\n");
+        return 1;
+    }
+
+    if (!extensionFilter || strlen(extensionFilter) == 0) {
+        extensionFilter = "txt";
+    }
+
+    snprintf(pattern, sizeof(pattern), "*.%s", extensionFilter);
+    hFind = FindFirstFile(pattern, &findFileData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        printf("Error: Could not open directory for pattern %s\n", pattern);
+        return 1;
+    }
+
+    do {
+        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            FILE *file = fopen(findFileData.cFileName, "r");
+            tested++;
+            if (!file) {
+                continue;
+            }
+
+            if (useRegex) {
+                if (fileContainsWildcardPattern(file, keyword, caseInsensitive)) {
+                    printf("MATCH: %s\n", findFileData.cFileName);
+                    found++;
+                }
+            } else if (caseInsensitive) {
+                if (fileContainsKeywordKmpCaseInsensitive(file, keyword)) {
+                    printf("MATCH: %s\n", findFileData.cFileName);
+                    found++;
+                }
+            } else {
+                if (fileContainsKeywordKmp(file, keyword)) {
+                    printf("MATCH: %s\n", findFileData.cFileName);
+                    found++;
+                }
+            }
+
+            fclose(file);
+        }
+    } while (FindNextFile(hFind, &findFileData));
+
+    FindClose(hFind);
+    printf("Search summary: tested=%d, matched=%d\n", tested, found);
+    return 0;
+}
+
 void searchfile() {
     char search_option;
     char optionInput[8];
     char file_name[MAX_FILE_NAME_LENGTH], keyword[MAX_KEYWORD_LENGTH];
 
     // Ask user to choose search type (by name or keyword)
-    zwPrintInline("Search by name(n) or keyword(k): ", 20, INFO);
-    zwReadLine(optionInput, sizeof(optionInput), 53);
+    zwPromptInput("  [SEARCH] Search by name (n) or keyword (k): ", optionInput, sizeof(optionInput), INFO);
     search_option = optionInput[0];
 
     if (search_option == 'n' || search_option == 'N') {
         // Search by file name
-        zwPrintInline("File name/pattern: ", 20, INFO);
-        zwReadLine(file_name, sizeof(file_name), 39);
+        zwPromptInput("  [SEARCH] File name/pattern: ", file_name, sizeof(file_name), INFO);
 
         // Validate file name 
        if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
@@ -128,8 +276,13 @@ void searchfile() {
 
     } else if (search_option == 'k' || search_option == 'K') {
         // Search by keyword in text files
-        zwPrintInline("Keyword: ", 20, INFO);
-        zwReadLine(keyword, sizeof(keyword), 29);
+        char ext[16];
+        char ciInput[8];
+        char regexInput[8];
+        int caseInsensitive = 0;
+        int useRegex = 0;
+
+        zwPromptInput("  [SEARCH] Keyword: ", keyword, sizeof(keyword), INFO);
 
         // Validate keyword input
         if (strlen(keyword) == 0) {
@@ -137,39 +290,23 @@ void searchfile() {
             return;
         }
 
-        // Windows-specific code to search for files
-        WIN32_FIND_DATA findFileData;
-        HANDLE hFind = FindFirstFile("*.txt", &findFileData);  // Search for text files (*.txt)
-
-        if (hFind == INVALID_HANDLE_VALUE) {
-            zwPrint("Error: Could not open directory to search for .txt files.\n", 20, ERROR_FILE);
-            return;
+        zwPromptInput("  [SEARCH] Extension (default txt): ", ext, sizeof(ext), INFO);
+        if (strlen(ext) == 0) {
+            strcpy(ext, "txt");
         }
 
-        int found = 0;
-        do {
-            if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  
-                // Open the file for reading
-                FILE *file = fopen(findFileData.cFileName, "r");
-                if (file) {
-                    if (fileContainsKeywordKmp(file, keyword)) {
-                        zwPrint("Found keyword in file:", 20, SUCCESS);
-                        printf("%s\n", findFileData.cFileName); // Display the file name where keyword was found
-                        found = 1;
-                    }
-                    fclose(file);
-                } else {
-                    char warningMessage[160];
-                    snprintf(warningMessage, sizeof(warningMessage), "Warning: Could not open file %s for reading.", findFileData.cFileName);
-                    zwPrint(warningMessage, 20, WARNING);  // Warning if file can't be opened
-                }
-            }
-        } while (FindNextFile(hFind, &findFileData));  // Continue with next file
+        zwPromptInput("  [SEARCH] Case-insensitive? (y/n): ", ciInput, sizeof(ciInput), INFO);
+        if (ciInput[0] == 'y' || ciInput[0] == 'Y') {
+            caseInsensitive = 1;
+        }
 
-        FindClose(hFind);
+        zwPromptInput("  [SEARCH] Use regex? (y/n): ", regexInput, sizeof(regexInput), INFO);
+        if (regexInput[0] == 'y' || regexInput[0] == 'Y') {
+            useRegex = 1;
+        }
 
-        if (!found) {
-            zwPrint("No matching files found containing the keyword.\n", 20, ERROR_FILE);
+        if (searchKeywordAdvanced(keyword, ext, caseInsensitive, useRegex) != 0) {
+            zwPrint("Search failed.", 2, ERROR_FILE);
         }
 
     } else {

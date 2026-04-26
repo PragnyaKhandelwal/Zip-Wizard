@@ -1,6 +1,9 @@
 #include "Utils.h"
+#include <ctype.h>
 #include <string.h>
 #include <windows.h>
+
+static int g_lastOperationStatus = 0;
 
 static void zwApplyColor(int type)
 {
@@ -190,7 +193,7 @@ void zwDrawBoxSimple(int width, int type)
 {
     zwApplyColor(type);
     printf("  ");
-    for (int i = 0; i < width; i++) printf("═");
+    for (int i = 0; i < width; i++) printf("=");
     printf("\n");
     fflush(stdout);
     zwApplyColor(INFO);
@@ -209,19 +212,19 @@ void zwDrawBox(int width, int height, int offsetX, int offsetY, int type)
         
         if (y == 0) {
             // Top border
-            printf("╔");
-            for (int x = 1; x < width - 1; x++) printf("═");
-            printf("╗");
+            printf("+");
+            for (int x = 1; x < width - 1; x++) printf("-");
+            printf("+");
         } else if (y == height - 1) {
             // Bottom border
-            printf("╚");
-            for (int x = 1; x < width - 1; x++) printf("═");
-            printf("╝");
+            printf("+");
+            for (int x = 1; x < width - 1; x++) printf("-");
+            printf("+");
         } else {
             // Side borders
-            printf("║");
+            printf("|");
             for (int x = 1; x < width - 1; x++) printf(" ");
-            printf("║");
+            printf("|");
         }
     }
     fflush(stdout);
@@ -239,8 +242,8 @@ void zwDrawProgressBar(int percentage, int offsetX, int width, int type)
     
     printf("[");
     int filledWidth = (width * percentage) / 100;
-    for (int i = 0; i < filledWidth; i++) printf("█");
-    for (int i = filledWidth; i < width; i++) printf("░");
+    for (int i = 0; i < filledWidth; i++) printf("#");
+    for (int i = filledWidth; i < width; i++) printf(".");
     printf("] %d%%", percentage);
     fflush(stdout);
     zwApplyColor(INFO);
@@ -251,7 +254,7 @@ void zwMenuItemStyled(int number, const char *description, int offset, int type)
 {
     zwApplyColor(type);
     zwMoveCursor(offset);
-    printf("  ► [%d] %s\n", number, description);
+    printf("  > [%d] %s\n", number, description);
     fflush(stdout);
     zwApplyColor(INFO);
 }
@@ -268,4 +271,126 @@ void zwClearLine(int offsetY)
         printf(" ");
     }
     SetConsoleCursorPosition(hConsole, coord);
+}
+
+void zwSetLastOperationStatus(int status)
+{
+    g_lastOperationStatus = status;
+}
+
+int zwGetLastOperationStatus(void)
+{
+    return g_lastOperationStatus;
+}
+
+int zwHasTxtExtension(const char *fileName)
+{
+    size_t len;
+    if (!fileName)
+    {
+        return 0;
+    }
+
+    len = strlen(fileName);
+    if (len < 4)
+    {
+        return 0;
+    }
+
+    return _stricmp(fileName + len - 4, ".txt") == 0;
+}
+
+int zwValidateFileName(const char *fileName, char *errorBuf, size_t errorSize)
+{
+    static const char *reserved[] = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    };
+
+    size_t len;
+    char upperBase[MAX_FILE_NAME_LENGTH + 1];
+    size_t i;
+    size_t baseLen = 0;
+
+    if (!errorBuf || errorSize == 0)
+    {
+        return 0;
+    }
+
+    errorBuf[0] = '\0';
+
+    if (!fileName)
+    {
+        snprintf(errorBuf, errorSize, "File name cannot be null.");
+        return 0;
+    }
+
+    len = strlen(fileName);
+    if (len == 0)
+    {
+        snprintf(errorBuf, errorSize, "File name cannot be empty.");
+        return 0;
+    }
+
+    if (len > MAX_FILE_NAME_LENGTH)
+    {
+        snprintf(errorBuf, errorSize, "File name is too long. Max length is %d.", MAX_FILE_NAME_LENGTH);
+        return 0;
+    }
+
+    if (len >= 2 && fileName[1] == ':')
+    {
+        snprintf(errorBuf, errorSize, "Use relative file names only (no drive letters).");
+        return 0;
+    }
+
+    if (strstr(fileName, "..") != NULL)
+    {
+        snprintf(errorBuf, errorSize, "Parent directory traversal is not allowed.");
+        return 0;
+    }
+
+    for (i = 0; i < len; i++)
+    {
+        unsigned char c = (unsigned char)fileName[i];
+        if (c < 32)
+        {
+            snprintf(errorBuf, errorSize, "File name contains non-printable characters.");
+            return 0;
+        }
+
+        if (strchr("\\/:*?\"<>|", (int)c) != NULL)
+        {
+            snprintf(errorBuf, errorSize, "File name contains invalid Windows characters.");
+            return 0;
+        }
+    }
+
+    if (fileName[len - 1] == ' ' || fileName[len - 1] == '.')
+    {
+        snprintf(errorBuf, errorSize, "File name cannot end with space or dot.");
+        return 0;
+    }
+
+    for (i = 0; i < len && i < sizeof(upperBase) - 1; i++)
+    {
+        if (fileName[i] == '.')
+        {
+            break;
+        }
+        upperBase[baseLen++] = (char)toupper((unsigned char)fileName[i]);
+    }
+    upperBase[baseLen] = '\0';
+
+    for (i = 0; i < sizeof(reserved) / sizeof(reserved[0]); i++)
+    {
+        if (strcmp(upperBase, reserved[i]) == 0)
+        {
+            snprintf(errorBuf, errorSize, "File name is a reserved Windows device name.");
+            return 0;
+        }
+    }
+
+    return 1;
 }

@@ -2,6 +2,43 @@
 #include "deleteFile.h"
 #include "fileIndex.h"
 
+int deletefileNonInteractive(const char *fileName)
+{
+    char err[160];
+
+    if (!zwValidateFileName(fileName, err, sizeof(err)))
+    {
+        zwPrint(err, 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!zwHasTxtExtension(fileName))
+    {
+        zwPrint("File name must end with .txt", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (!fileIndexContains(fileName))
+    {
+        zwPrint("File does not exist", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    if (remove(fileName) != 0)
+    {
+        zwPrint("Error deleting file", 2, ERROR_FILE);
+        zwSetLastOperationStatus(1);
+        return 1;
+    }
+
+    fileIndexRemove(fileName);
+    zwSetLastOperationStatus(0);
+    return 0;
+}
+
 void deletefile()
 {
     char file_name[MAX_FILE_NAME_LENGTH + 1];
@@ -9,31 +46,8 @@ void deletefile()
     printf("\n");
     zwPromptInput("  [DELETE] File name (.txt): ", file_name, sizeof(file_name), INFO);
     
-    if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
+    if (deletefileNonInteractive(file_name) == 0)
     {
-        zwPrint("  [ERROR] File name is too long.", 2, ERROR_FILE);
-        return;
-    }
-
-    if (strlen(file_name) == 0)
-    {
-        zwPrint("  [ERROR] File name cannot be empty.", 2, ERROR_FILE);
-        return;
-    }
-
-    if (!fileIndexContains(file_name))
-    {
-        zwPrint("  [ERROR] File does not exist", 2, ERROR_FILE);
-        return;
-    }
-
-    if (remove(file_name) == 0)
-    {
-        fileIndexRemove(file_name);
         zwPrint("  [SUCCESS] Your file has been deleted successfully!", 2, SUCCESS);
-    }
-    else
-    {
-        zwPrint("  [ERROR] Error: File does not exist", 2, ERROR_FILE);
     }
 }
