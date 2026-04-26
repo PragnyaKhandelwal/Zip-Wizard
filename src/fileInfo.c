@@ -13,21 +13,21 @@ int fileinfoNonInteractive(const char *fileName)
 
     if (!zwValidateFileName(fileName, err, sizeof(err)))
     {
-        printf("%s\n", err);
+        zwPrintAdaptive(err, ERROR_FILE);
         return 1;
     }
 
     snprintf(file_path, sizeof(file_path), "%s", fileName);
     if (!fileIndexContains(file_path))
     {
-        printf("Error: file does not exist or could not be opened.\n");
+        zwPrintAdaptive("Error: file does not exist or could not be opened.", ERROR_FILE);
         return 1;
     }
 
     FILE *file = fopen(file_path, "r");
     if (!file)
     {
-        printf("Error: file does not exist or could not be opened.\n");
+        zwPrintAdaptive("Error: file does not exist or could not be opened.", ERROR_FILE);
         return 1;
     }
 
@@ -41,7 +41,7 @@ int fileinfoNonInteractive(const char *fileName)
 
         if (GetFullPathName(file_path, MAX_PATH, fullPath, NULL) > 0)
         {
-            printf("%s\n", fullPath);
+            zwPrintAdaptive(fullPath, INFO);
         }
 
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) strcat(attributes, "Directory ");
@@ -49,7 +49,7 @@ int fileinfoNonInteractive(const char *fileName)
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) strcat(attributes, "Hidden ");
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) strcat(attributes, "System ");
         if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) strcat(attributes, "Archive ");
-        printf("%s\n", attributes);
+        zwPrintAdaptive(attributes, INFO);
 
         FileTimeToLocalFileTime(&fileInfo.ftCreationTime, &localCreationTime);
         FileTimeToLocalFileTime(&fileInfo.ftLastAccessTime, &localAccessTime);
@@ -58,13 +58,13 @@ int fileinfoNonInteractive(const char *fileName)
         FileTimeToSystemTime(&localAccessTime, &accessTime);
         FileTimeToSystemTime(&localWriteTime, &writeTime);
 
-        printf("Created: %02d/%02d/%d %02d:%02d:%02d\n",
+        zwPrintfAdaptive(INFO, "Created: %02d/%02d/%d %02d:%02d:%02d",
             creationTime.wDay, creationTime.wMonth, creationTime.wYear,
             creationTime.wHour, creationTime.wMinute, creationTime.wSecond);
-        printf("Last Accessed: %02d/%02d/%d %02d:%02d:%02d\n",
+        zwPrintfAdaptive(INFO, "Last Accessed: %02d/%02d/%d %02d:%02d:%02d",
             accessTime.wDay, accessTime.wMonth, accessTime.wYear,
             accessTime.wHour, accessTime.wMinute, accessTime.wSecond);
-        printf("Last Modified: %02d/%02d/%d %02d:%02d:%02d\n",
+        zwPrintfAdaptive(INFO, "Last Modified: %02d/%02d/%d %02d:%02d:%02d",
             writeTime.wDay, writeTime.wMonth, writeTime.wYear,
             writeTime.wHour, writeTime.wMinute, writeTime.wSecond);
     }

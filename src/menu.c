@@ -76,7 +76,7 @@ static void runTimedOperation(const char *operationName, void (*operation)(void)
 
     double elapsedMs = ((double)(end.QuadPart - start.QuadPart) * 1000.0) / (double)frequency.QuadPart;
     snprintf(timingMessage, sizeof(timingMessage), "[Timing] %s completed in %.3f ms", operationName, elapsedMs);
-    zwPrint(timingMessage, 20, INFO);
+    zwPrintAdaptive(timingMessage, INFO);
 
     g_telemetry.totalOps++;
     g_telemetry.totalMs += elapsedMs;
@@ -267,7 +267,7 @@ void userchoice(int n) {
         runTimedOperation("Unzip File", unzipFile);
         break;
     }
-    printf("\n  Press Enter to return to the main menu...");
+    zwPrintAdaptive("Press Enter to return to the main menu...", INFO);
     char dummy[10];
     fgets(dummy, sizeof(dummy), stdin);
 }

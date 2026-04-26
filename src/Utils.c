@@ -1,6 +1,7 @@
 #include "Utils.h"
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 #include <conio.h>
 #include <windows.h>
 
@@ -217,6 +218,32 @@ void zwMoveCursor(int offset)
 
     COORD coord = {(SHORT)finalOffset, consoleInfo.dwCursorPosition.Y};
     SetConsoleCursorPosition(hConsole, coord);
+}
+
+void zwPrintBlankLine(void)
+{
+    printf("\n");
+}
+
+void zwPrintAdaptive(const char *text, int type)
+{
+    zwPrint(text ? text : "", 2, type);
+}
+
+void zwPrintfAdaptive(int type, const char *fmt, ...)
+{
+    char buffer[1024];
+    va_list args;
+
+    if (!fmt) {
+        return;
+    }
+
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    zwPrintAdaptive(buffer, type);
 }
 
 void zwPrint(const char *text, int offset, int type)

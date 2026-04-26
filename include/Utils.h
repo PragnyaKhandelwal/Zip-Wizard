@@ -25,6 +25,9 @@ void zwReadLine(char *buffer, size_t size, int offset);
 void zwClearScreen(void);
 void zwDrawRule(int offset, int width, char ch, int type);
 void zwMoveCursor(int offset);
+void zwPrintBlankLine(void);
+void zwPrintAdaptive(const char *text, int type);
+void zwPrintfAdaptive(int type, const char *fmt, ...);
 
 // ===== NEW PROFESSIONAL UI FUNCTIONS =====
 // Centered text printing

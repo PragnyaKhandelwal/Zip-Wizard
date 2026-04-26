@@ -212,12 +212,12 @@ int unzipFilePath(const char *compressedFileName, const char *outputFileName) {
     char err[160];
 
     if (!compressedFileName || strlen(compressedFileName) == 0) {
-        printf("Error: compressed file path is empty.\n");
+        zwPrintAdaptive("Error: compressed file path is empty.", ERROR_FILE);
         return 1;
     }
 
     if (!zwValidatePath(compressedFileName, err, sizeof(err))) {
-        printf("%s\n", err);
+        zwPrintAdaptive(err, ERROR_FILE);
         return 1;
     }
 
@@ -235,20 +235,20 @@ int unzipFilePath(const char *compressedFileName, const char *outputFileName) {
         }
         outputFileName = derivedOutput;
     } else if (!zwValidatePath(outputFileName, err, sizeof(err))) {
-        printf("%s\n", err);
+        zwPrintAdaptive(err, ERROR_FILE);
         return 1;
     }
 
     compressedFile = fopen(compressedFileName, "rb");
     if (!compressedFile) {
-        printf("Error: Unable to open compressed file for reading.\n");
+        zwPrintAdaptive("Error: Unable to open compressed file for reading.", ERROR_FILE);
         return 1;
     }
 
     outputFile = fopen(outputFileName, "wb");
     if (!outputFile) {
         fclose(compressedFile);
-        printf("Error: Unable to open output file for writing.\n");
+        zwPrintAdaptive("Error: Unable to open output file for writing.", ERROR_FILE);
         return 1;
     }
 
@@ -266,7 +266,7 @@ int unzipFilePath(const char *compressedFileName, const char *outputFileName) {
         if (headerMatched && !usedVersionedFormat) {
             fclose(compressedFile);
             fclose(outputFile);
-            printf("Error: versioned archive decoding failed.\n");
+            zwPrintAdaptive("Error: versioned archive decoding failed.", ERROR_FILE);
             return 1;
         }
 
@@ -278,7 +278,7 @@ int unzipFilePath(const char *compressedFileName, const char *outputFileName) {
 
     fclose(compressedFile);
     fclose(outputFile);
-    printf("Unzipped: %s -> %s\n", compressedFileName, outputFileName);
+    zwPrintfAdaptive(INFO, "Unzipped: %s -> %s", compressedFileName, outputFileName);
     return 0;
 }
 
@@ -293,7 +293,7 @@ int batchUnzipFiles(int count, const char *files[]) {
     for (int i = 0; i < count; i++) {
         int progress = ((i + 1) * 100) / count;
         zwDrawProgressBar(progress, 2, 40, PROCESSING_STATEMENTS);
-        printf("\n");
+        zwPrintBlankLine();
 
         if (unzipFilePath(files[i], NULL) == 0) {
             success++;
@@ -302,7 +302,7 @@ int batchUnzipFiles(int count, const char *files[]) {
         }
     }
 
-    printf("Batch unzip summary: total=%d success=%d failed=%d\n", count, success, failed);
+    zwPrintfAdaptive(INFO, "Batch unzip summary: total=%d success=%d failed=%d", count, success, failed);
     return failed == 0 ? 0 : 1;
 }
 

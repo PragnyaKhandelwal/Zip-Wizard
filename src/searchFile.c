@@ -167,7 +167,7 @@ int searchKeywordAdvanced(const char *keyword, const char *extensionFilter, int 
     int tested = 0;
 
     if (!keyword || strlen(keyword) == 0) {
-        printf("Error: keyword cannot be empty.\n");
+        zwPrintAdaptive("Error: keyword cannot be empty.", ERROR_FILE);
         return 1;
     }
 
@@ -178,7 +178,7 @@ int searchKeywordAdvanced(const char *keyword, const char *extensionFilter, int 
     snprintf(pattern, sizeof(pattern), "*.%s", extensionFilter);
     hFind = FindFirstFile(pattern, &findFileData);
     if (hFind == INVALID_HANDLE_VALUE) {
-        printf("Error: Could not open directory for pattern %s\n", pattern);
+        zwPrintfAdaptive(ERROR_FILE, "Error: Could not open directory for pattern %s", pattern);
         return 1;
     }
 
@@ -192,17 +192,17 @@ int searchKeywordAdvanced(const char *keyword, const char *extensionFilter, int 
 
             if (useRegex) {
                 if (fileContainsWildcardPattern(file, keyword, caseInsensitive)) {
-                    printf("MATCH: %s\n", findFileData.cFileName);
+                    zwPrintfAdaptive(SUCCESS, "MATCH: %s", findFileData.cFileName);
                     found++;
                 }
             } else if (caseInsensitive) {
                 if (fileContainsKeywordKmpCaseInsensitive(file, keyword)) {
-                    printf("MATCH: %s\n", findFileData.cFileName);
+                    zwPrintfAdaptive(SUCCESS, "MATCH: %s", findFileData.cFileName);
                     found++;
                 }
             } else {
                 if (fileContainsKeywordKmp(file, keyword)) {
-                    printf("MATCH: %s\n", findFileData.cFileName);
+                    zwPrintfAdaptive(SUCCESS, "MATCH: %s", findFileData.cFileName);
                     found++;
                 }
             }
@@ -212,7 +212,7 @@ int searchKeywordAdvanced(const char *keyword, const char *extensionFilter, int 
     } while (FindNextFile(hFind, &findFileData));
 
     FindClose(hFind);
-    printf("Search summary: tested=%d, matched=%d\n", tested, found);
+    zwPrintfAdaptive(INFO, "Search summary: tested=%d, matched=%d", tested, found);
     return 0;
 }
 
@@ -232,13 +232,13 @@ void searchfile() {
         // Validate file name 
        if (!(strlen(file_name) < MAX_FILE_NAME_LENGTH))
     {
-        zwPrint("Error: File name is too long.\n", 20, ERROR_FILE);
+        zwPrintAdaptive("Error: File name is too long.", ERROR_FILE);
         return;
     }
 
     if (strlen(file_name) == 0)
     {
-        zwPrint("Error: File name cannot be empty.\n", 20, ERROR_FILE);
+        zwPrintAdaptive("Error: File name cannot be empty.", ERROR_FILE);
         return;
     }
 
@@ -246,7 +246,7 @@ void searchfile() {
             if (fileIndexContains(file_name)) {
                 zwPrint("File found succesfully!\n", 20, SUCCESS);
             } else {
-                zwPrint("Error: Could not find files matching the pattern.\n", 20, ERROR_FILE);
+                zwPrintAdaptive("Error: Could not find files matching the pattern.", ERROR_FILE);
             }
             return;
         }
@@ -256,14 +256,14 @@ void searchfile() {
         HANDLE hFind = FindFirstFile(file_name, &findFileData); 
 
         if (hFind == INVALID_HANDLE_VALUE) {
-            zwPrint("Error: Could not find files matching the pattern.\n", 20, ERROR_FILE);
+            zwPrintAdaptive("Error: Could not find files matching the pattern.", ERROR_FILE);
             return;
         }
 
         int found = 0;
         do {
             if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  
-                zwPrint("File found succesfully!\n", 20, SUCCESS);
+                zwPrintAdaptive("File found succesfully!", SUCCESS);
                     found = 1;  // At least one file was found
             }
         } while (FindNextFile(hFind, &findFileData));  // Continue with next file
@@ -271,7 +271,7 @@ void searchfile() {
         FindClose(hFind);
 
         if (!found) {
-            zwPrint("No files found matching the pattern.\n", 20, ERROR_FILE);
+            zwPrintAdaptive("No files found matching the pattern.", ERROR_FILE);
         }
 
     } else if (search_option == 'k' || search_option == 'K') {
@@ -286,7 +286,7 @@ void searchfile() {
 
         // Validate keyword input
         if (strlen(keyword) == 0) {
-            zwPrint("Error: Keyword cannot be empty.\n", 20, ERROR_FILE);
+            zwPrintAdaptive("Error: Keyword cannot be empty.", ERROR_FILE);
             return;
         }
 
@@ -310,6 +310,6 @@ void searchfile() {
         }
 
     } else {
-        zwPrint("Invalid option. Choose 'n' for name or 'k' for keyword.\n", 20, ERROR_FILE);
+        zwPrintAdaptive("Invalid option. Choose 'n' for name or 'k' for keyword.", ERROR_FILE);
     }
 }

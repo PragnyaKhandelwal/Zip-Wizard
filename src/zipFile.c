@@ -527,12 +527,12 @@ int zipFilePath(const char *inputFileName, const char *outputZipName) {
     char err[160];
 
     if (!zwValidatePath(inputFileName, err, sizeof(err))) {
-        printf("%s\n", err);
+        zwPrintAdaptive(err, ERROR_FILE);
         return 1;
     }
 
     if (!zwHasTxtExtension(inputFileName)) {
-        printf("Input file must end with .txt\n");
+        zwPrintAdaptive("Input file must end with .txt", ERROR_FILE);
         return 1;
     }
 
@@ -541,7 +541,7 @@ int zipFilePath(const char *inputFileName, const char *outputZipName) {
         target = autoOutput;
     } else {
         if (!zwValidatePath(outputZipName, err, sizeof(err))) {
-            printf("%s\n", err);
+            zwPrintAdaptive(err, ERROR_FILE);
             return 1;
         }
         target = outputZipName;
@@ -549,14 +549,14 @@ int zipFilePath(const char *inputFileName, const char *outputZipName) {
 
     inputFile = fopen(inputFileName, "rb");
     if (!inputFile) {
-        printf("Error: unable to open input file for zipping.\n");
+        zwPrintAdaptive("Error: unable to open input file for zipping.", ERROR_FILE);
         return 1;
     }
 
     zipOut = fopen(target, "wb");
     if (!zipOut) {
         fclose(inputFile);
-        printf("Error: unable to open output zip file.\n");
+        zwPrintAdaptive("Error: unable to open output zip file.", ERROR_FILE);
         return 1;
     }
 
@@ -567,7 +567,7 @@ int zipFilePath(const char *inputFileName, const char *outputZipName) {
             fclose(inputFile);
             fclose(zipOut);
             free(inputData);
-            printf("Error: compression failed.\n");
+            zwPrintAdaptive("Error: compression failed.", ERROR_FILE);
             return 1;
         }
 
@@ -592,8 +592,8 @@ int zipFilePath(const char *inputFileName, const char *outputZipName) {
             ratio = ((double)outputBytes * 100.0) / (double)stats.inputBytes;
         }
 
-        printf("Zipped: %s -> %s (Huffman+LZ77 v2)\n", inputFileName, target);
-        printf("Compression: tokens=%lu, input=%lu bytes, output=%ld bytes, ratio=%.2f%%, time=%.3f ms\n",
+        zwPrintfAdaptive(INFO, "Zipped: %s -> %s (Huffman+LZ77 v2)", inputFileName, target);
+        zwPrintfAdaptive(INFO, "Compression: tokens=%lu, input=%lu bytes, output=%ld bytes, ratio=%.2f%%, time=%.3f ms",
                (unsigned long)stats.tokenCount,
                (unsigned long)stats.inputBytes,
                outputBytes,
@@ -615,7 +615,7 @@ int batchZipFiles(int count, const char *files[]) {
     for (int i = 0; i < count; i++) {
         int progress = ((i + 1) * 100) / count;
         zwDrawProgressBar(progress, 2, 40, PROCESSING_STATEMENTS);
-        printf("\n");
+        zwPrintBlankLine();
 
         if (zipFilePath(files[i], NULL) == 0) {
             success++;
@@ -624,7 +624,7 @@ int batchZipFiles(int count, const char *files[]) {
         }
     }
 
-    printf("Batch zip summary: total=%d success=%d failed=%d\n", count, success, failed);
+    zwPrintfAdaptive(INFO, "Batch zip summary: total=%d success=%d failed=%d", count, success, failed);
     return failed == 0 ? 0 : 1;
 }
 
@@ -652,14 +652,14 @@ int benchmarkCompressionAlgorithms(const char *inputFileName) {
     char compareMessage[200];
 
     if (!inputFile) {
-        printf("Error: could not open benchmark input file: %s\n", inputFileName);
+        zwPrintfAdaptive(ERROR_FILE, "Error: could not open benchmark input file: %s", inputFileName);
         return 1;
     }
 
     naiveOut = tmpfile();
     optimizedOut = tmpfile();
     if (!naiveOut || !optimizedOut) {
-        printf("Error: unable to allocate temporary benchmark outputs.\n");
+        zwPrintAdaptive("Error: unable to allocate temporary benchmark outputs.", ERROR_FILE);
         fclose(inputFile);
         if (naiveOut) {
             fclose(naiveOut);
@@ -671,7 +671,7 @@ int benchmarkCompressionAlgorithms(const char *inputFileName) {
     }
 
     if (!runCompressionWithMatcher(inputFile, naiveOut, findBestMatchNaive, &naiveStats)) {
-        printf("Error: naive benchmark compression failed.\n");
+        zwPrintAdaptive("Error: naive benchmark compression failed.", ERROR_FILE);
         fclose(inputFile);
         fclose(naiveOut);
         fclose(optimizedOut);
@@ -680,7 +680,7 @@ int benchmarkCompressionAlgorithms(const char *inputFileName) {
 
     rewind(inputFile);
     if (!runCompressionWithMatcher(inputFile, optimizedOut, findBestMatchHashChain, &optimizedStats)) {
-        printf("Error: optimized benchmark compression failed.\n");
+        zwPrintAdaptive("Error: optimized benchmark compression failed.", ERROR_FILE);
         fclose(inputFile);
         fclose(naiveOut);
         fclose(optimizedOut);
@@ -691,14 +691,14 @@ int benchmarkCompressionAlgorithms(const char *inputFileName) {
     fclose(naiveOut);
     fclose(optimizedOut);
 
-    printf("Compression Benchmark: %s\n", inputFileName);
-    printf("- Naive     : time=%.3f ms, tokens=%lu\n", naiveStats.elapsedMs, (unsigned long)naiveStats.tokenCount);
-    printf("- HashChain : time=%.3f ms, tokens=%lu\n", optimizedStats.elapsedMs, (unsigned long)optimizedStats.tokenCount);
+    zwPrintfAdaptive(INFO, "Compression Benchmark: %s", inputFileName);
+    zwPrintfAdaptive(INFO, "- Naive     : time=%.3f ms, tokens=%lu", naiveStats.elapsedMs, (unsigned long)naiveStats.tokenCount);
+    zwPrintfAdaptive(INFO, "- HashChain : time=%.3f ms, tokens=%lu", optimizedStats.elapsedMs, (unsigned long)optimizedStats.tokenCount);
 
     if (optimizedStats.elapsedMs > 0.0) {
         double speedup = naiveStats.elapsedMs / optimizedStats.elapsedMs;
         snprintf(compareMessage, sizeof(compareMessage), "Speedup (Naive/HashChain): %.3fx", speedup);
-        printf("- %s\n", compareMessage);
+        zwPrintfAdaptive(INFO, "- %s", compareMessage);
     }
 
     return 0;

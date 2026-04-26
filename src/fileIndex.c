@@ -1,4 +1,5 @@
 #include "fileIndex.h"
+#include "Utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -180,11 +181,11 @@ int benchmarkFileIndexLookups(const char *fileName, int iterations) {
     QueryPerformanceCounter(&end);
     fsMs = ((double)(end.QuadPart - start.QuadPart) * 1000.0) / (double)freq.QuadPart;
 
-    printf("File Index Benchmark: name=%s iterations=%d\n", fileName, iterations);
-    printf("- Hash index lookup time: %.3f ms\n", indexMs);
-    printf("- FindFirstFile lookup time: %.3f ms\n", fsMs);
+    zwPrintfAdaptive(INFO, "File Index Benchmark: name=%s iterations=%d", fileName, iterations);
+    zwPrintfAdaptive(INFO, "- Hash index lookup time: %.3f ms", indexMs);
+    zwPrintfAdaptive(INFO, "- FindFirstFile lookup time: %.3f ms", fsMs);
     if (indexMs > 0.0) {
-        printf("- Speedup (FindFirstFile/Index): %.3fx\n", fsMs / indexMs);
+        zwPrintfAdaptive(INFO, "- Speedup (FindFirstFile/Index): %.3fx", fsMs / indexMs);
     }
 
     (void)foundCount;
