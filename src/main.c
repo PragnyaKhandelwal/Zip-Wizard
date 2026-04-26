@@ -22,10 +22,10 @@ static void printUsage(void)
     printf("  delete: zipwizard.exe --delete <file.txt>\n");
     printf("  search: zipwizard.exe --search --keyword <kw> [--ext txt] [--ignore-case] [--regex]\n");
     printf("  info: zipwizard.exe --info <file.txt>\n");
-    printf("  zip: zipwizard.exe --zip <file.txt> [output.zip]\n");
-    printf("  unzip: zipwizard.exe --unzip <file.zip> [output.txt]\n");
+    printf("  zip: zipwizard.exe --zip <file.txt> [output.zwz]\n");
+    printf("  unzip: zipwizard.exe --unzip <file.zwz|file.zip> [output.txt]\n");
     printf("  batch zip: zipwizard.exe --batch-zip <file1.txt> <file2.txt> ...\n");
-    printf("  batch unzip: zipwizard.exe --batch-unzip <file1.zip> <file2.zip> ...\n");
+    printf("  batch unzip: zipwizard.exe --batch-unzip <file1.zwz> <file2.zwz> ...\n");
     printf("  benchmark index: zipwizard.exe --benchmark-index <file> <iterations>\n");
     printf("  benchmark compress: zipwizard.exe --benchmark-compress <file>\n");
 }
@@ -129,10 +129,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    terminalSize(110,35);
-    menu();
     while (1)
     {
+        menu();
         validatechoices();
     }
     return 0;

@@ -51,6 +51,8 @@ run-lz77-tests.bat
 - File metadata: full path, attributes, and timestamps.
 - Compression/decompression: LZ77-based zip/unzip workflow.
 - CLI UX: menu-driven interaction with input validation.
+- Interactive menu supports arrow-key selector + Enter execution.
+- Menu layout reflows on terminal resize while waiting for selection.
 - Non-interactive CLI mode for automation.
 - Batch zip/unzip with progress and summary.
 - Telemetry summary on exit (total/success/failure/avg-time).
@@ -64,12 +66,14 @@ zipwizard.exe --rename demo.txt demo2.txt
 zipwizard.exe --delete demo2.txt
 
 zipwizard.exe --zip input.txt
-zipwizard.exe --zip input.txt out.zip
-zipwizard.exe --unzip out.zip
-zipwizard.exe --unzip out.zip restored.txt
+zipwizard.exe --zip input.txt out.zwz
+zipwizard.exe --unzip out.zwz
+zipwizard.exe --unzip out.zwz restored.txt
+zipwizard.exe --zip "C:\data\input.txt" "D:\archives\input.zwz"
+zipwizard.exe --unzip "D:\archives\input.zwz" "D:\restore\input_restored.txt"
 
 zipwizard.exe --batch-zip a.txt b.txt c.txt
-zipwizard.exe --batch-unzip a.zip b.zip c.zip
+zipwizard.exe --batch-unzip a.zwz b.zwz c.zwz
 
 zipwizard.exe --search --keyword algorithm --ext txt --ignore-case
 zipwizard.exe --search --keyword "*error*" --ext log --regex

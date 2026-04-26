@@ -32,6 +32,39 @@ typedef struct OperationTelemetry {
 
 static OperationTelemetry g_telemetry = {0, 0, 0, 0.0};
 
+static void getConsoleDimensions(int *width, int *height) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+        *width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        *height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    } else {
+        *width = 110;
+        *height = 35;
+    }
+}
+
+static int getOuterRuleWidth(void) {
+    int w, h;
+    (void)h;
+    getConsoleDimensions(&w, &h);
+    if (w < 30) {
+        return 28;
+    }
+    return w - 2;
+}
+
+static int getMenuOffset(void) {
+    int w, h;
+    int panelWidth = 61;
+    (void)h;
+    getConsoleDimensions(&w, &h);
+    if (w <= panelWidth + 2) {
+        return 2;
+    }
+    return (w - panelWidth) / 2;
+}
+
 static void runTimedOperation(const char *operationName, void (*operation)(void)) {
     LARGE_INTEGER start, end, frequency;
     char timingMessage[160];
@@ -58,29 +91,113 @@ static void runTimedOperation(const char *operationName, void (*operation)(void)
 void menu() {
     zwClearScreen();
     printf("\n");
-    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
     zwPrintCentered("+-----------------------------------------------------------+", INFO);
     zwPrintCentered("|          ZIP WIZARD - PROFESSIONAL FILE UTILITY          |", SUCCESS);
     zwPrintCentered("+-----------------------------------------------------------+", INFO);
-    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
 
     printf("\n");
     zwPrintCentered("CHOOSE AN OPERATION:", INFO);
     printf("\n");
 
-    zwMenuItemStyled(1, "Create File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(2, "Edit File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(3, "Rename File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(4, "Delete File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(5, "File Search (KMP)", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(6, "File Information", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(7, "Zip File (LZ77)", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(8, "Unzip File", 15, PROCESSING_STATEMENTS);
-    zwMenuItemStyled(9, "Exit Program", 15, WARNING);
+    zwMenuItemStyled(1, "Create File", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(2, "Edit File", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(3, "Rename File", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(4, "Delete File", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(5, "File Search (KMP)", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(6, "File Information", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(7, "Zip File (LZ77)", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(8, "Unzip File", getMenuOffset(), PROCESSING_STATEMENTS);
+    zwMenuItemStyled(9, "Exit Program", getMenuOffset(), WARNING);
 
     printf("\n");
-    zwDrawBoxSimple(80, PROCESSING_STATEMENTS);
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
     printf("\n");
+}
+
+static void menuWithSelection(int selected) {
+    int offset = getMenuOffset();
+
+    zwClearScreen();
+    printf("\n");
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
+    zwPrintCentered("+-----------------------------------------------------------+", INFO);
+    zwPrintCentered("|          ZIP WIZARD - PROFESSIONAL FILE UTILITY          |", SUCCESS);
+    zwPrintCentered("+-----------------------------------------------------------+", INFO);
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
+
+    printf("\n");
+    zwPrintCentered("CHOOSE AN OPERATION:", INFO);
+    printf("\n");
+
+    for (int i = 1; i <= 9; i++) {
+        char line[96];
+        const char *label = "";
+        int color = PROCESSING_STATEMENTS;
+
+        switch (i) {
+            case 1: label = "Create File"; break;
+            case 2: label = "Edit File"; break;
+            case 3: label = "Rename File"; break;
+            case 4: label = "Delete File"; break;
+            case 5: label = "File Search (KMP)"; break;
+            case 6: label = "File Information"; break;
+            case 7: label = "Zip File (LZ77)"; break;
+            case 8: label = "Unzip File"; break;
+            case 9: label = "Exit Program"; color = WARNING; break;
+        }
+
+        if (i == selected) {
+            snprintf(line, sizeof(line), ">> [%d] %s", i, label);
+            zwPrint(line, offset, SUCCESS);
+        } else {
+            snprintf(line, sizeof(line), "   [%d] %s", i, label);
+            zwPrint(line, offset, color);
+        }
+    }
+
+    printf("\n");
+    zwDrawBoxSimple(getOuterRuleWidth(), PROCESSING_STATEMENTS);
+    zwPrintCentered("Use Up/Down arrows and Enter.", INFO);
+}
+
+static int readArrowSelection(void) {
+    int selected = 1;
+    int lastW = -1;
+    int lastH = -1;
+
+    menuWithSelection(selected);
+
+    while (1) {
+        int w, h;
+        getConsoleDimensions(&w, &h);
+        if (w != lastW || h != lastH) {
+            lastW = w;
+            lastH = h;
+            menuWithSelection(selected);
+        }
+
+        if (_kbhit()) {
+            int ch = _getch();
+            if (ch == 13) {
+                return selected;
+            }
+
+            if (ch == 0 || ch == 224) {
+                int key = _getch();
+                if (key == 72) {
+                    selected = (selected == 1) ? 9 : (selected - 1);
+                    menuWithSelection(selected);
+                } else if (key == 80) {
+                    selected = (selected == 9) ? 1 : (selected + 1);
+                    menuWithSelection(selected);
+                }
+            }
+        }
+
+        Sleep(40);
+    }
 }
 
 // Define the heading function
@@ -180,51 +297,15 @@ void quitProgram() {
 // Define the validatechoices function
 // Define the validatechoices function
 void validatechoices() {
-    int choice = -1;
+    int choice = readArrowSelection();
 
-    // Prompt for input - NEW ALIGNED APPROACH
-    printf("\n  ➤ Enter your choice (1-9): ");
-    fflush(stdout);
+    if (choice >= 1 && choice <= 8) {
+        userchoice(choice);
+        return;
+    }
 
-    // Continuously prompt the user until a valid input is entered
-    while (1) {
-        char input[10];
-        if (fgets(input, sizeof(input), stdin) == NULL)
-        {
-            zwPrint("Error: Failed to read input.\n", 2, ERROR_FILE);
-            continue;
-        }
-        input[strcspn(input, "\n")] = '\0';
-
-        // Check for empty input
-        if (strlen(input) == 0) {
-            zwPrint("  ✗ Error: Input cannot be empty. Please enter a number from 1 to 9.\n", 2, WARNING);
-            printf("  ➤ Enter your choice (1-9): ");
-            fflush(stdout);
-            continue;
-        }
-
-        // Try to convert input to an integer
-        if (sscanf(input, "%d", &choice) != 1) {
-            zwPrint("  ✗ Error: The input must be an integer.\n", 2, ERROR_FILE);
-            printf("  ➤ Enter your choice (1-9): ");
-            fflush(stdout);
-            continue;
-        }
-
-        // Validate the choice
-        if (choice >= 1 && choice <= 8) {
-            userchoice(choice);  // Proceed with the selected action
-            break;  // Exit the loop once a valid choice is processed
-        }
-        else if (choice == 9) {
-            quitProgram();  // Exit the program
-            break;  // Exit the loop
-        }
-        else {
-            zwPrint("  ✗ Error: Invalid Input! Please enter a number between 1 and 9.\n", 2, WARNING);
-            printf("  ➤ Enter your choice (1-9): ");
-            fflush(stdout);
-        }
+    if (choice == 9) {
+        quitProgram();
+        return;
     }
 }

@@ -49,10 +49,33 @@ void zwMenuItemStyled(int number, const char *description, int offset, int type)
 // Clear line at specific position
 void zwClearLine(int offsetY);
 
+// ===== RESPONSIVE TERMINAL FUNCTIONS =====
+// Get current console dimensions (width, height)
+void zwGetConsoleDimensions(int *width, int *height);
+
+// Print text wrapped to fit terminal width (respects margins)
+void zwPrintWrapped(const char *text, int leftMargin, int type);
+
+// Print text line in center with responsive sizing
+void zwPrintCenteredLine(const char *text, int type);
+
+// Draw a responsive horizontal rule
+void zwDrawResponsiveRule(char ch, int type);
+
+// Draw a responsive box with title
+void zwDrawResponsiveBox(const char *title, int type);
+
+// Print wrapped list of items with responsive sizing
+void zwPrintWrappedList(const char *items[], int itemCount, int leftMargin, int type);
+
+// Print responsive progress bar with percentage and label
+void zwDrawResponsiveProgressBar(const char *label, int percentage, int type);
+
 // Operation status and validation helpers
 void zwSetLastOperationStatus(int status);
 int zwGetLastOperationStatus(void);
 int zwValidateFileName(const char *fileName, char *errorBuf, size_t errorSize);
+int zwValidatePath(const char *path, char *errorBuf, size_t errorSize);
 int zwHasTxtExtension(const char *fileName);
 
 #endif

@@ -7,7 +7,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-gcc src\lz77_test.c src\zipFile.c src\unzipFile.c src\Utils.c src\fileIndex.c -I include -Wall -Wextra -O2 -o lz77_test.exe
+gcc src\lz77_test.c src\zipFile.c src\unzipFile.c src\huffman.c src\Utils.c src\fileIndex.c -I include -Wall -Wextra -O2 -o lz77_test.exe
 if errorlevel 1 (
   echo [ERROR] Failed to build lz77_test.exe
   exit /b 1

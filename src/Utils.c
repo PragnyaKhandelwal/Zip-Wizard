@@ -4,6 +4,7 @@
 #include <windows.h>
 
 static int g_lastOperationStatus = 0;
+static int getConsoleWidth(void);
 
 static void zwApplyColor(int type)
 {
@@ -46,14 +47,54 @@ void zwPrint(const char *text, int offset, int type)
 {
     zwApplyColor(type);
     zwMoveCursor(offset);
-    printf("%s\n", text); // Print the text with a newline
+    if (!text) {
+        printf("\n");
+        return;
+    }
+
+    int width = getConsoleWidth();
+    int available = width - offset - 1;
+    if (available < 1) {
+        available = 1;
+    }
+
+    size_t textLen = strlen(text);
+    size_t pos = 0;
+    while (pos < textLen) {
+        size_t chunk = textLen - pos;
+        if ((int)chunk > available) {
+            chunk = (size_t)available;
+            while (chunk > 0 && text[pos + chunk - 1] != ' ') {
+                chunk--;
+            }
+            if (chunk == 0) {
+                chunk = (size_t)available;
+            }
+        }
+
+        printf("%.*s\n", (int)chunk, text + pos);
+        pos += chunk;
+        while (pos < textLen && text[pos] == ' ') {
+            pos++;
+        }
+        if (pos < textLen) {
+            zwMoveCursor(offset);
+        }
+    }
 }
 
 void zwPrintInline(const char *text, int offset, int type)
 {
     zwApplyColor(type);
     zwMoveCursor(offset);
-    printf("%s", text);
+    if (text) {
+        int width = getConsoleWidth();
+        int available = width - offset - 1;
+        if (available < 1) {
+            available = 1;
+        }
+        printf("%.*s", available, text);
+    }
     fflush(stdout);
 }
 
@@ -81,6 +122,17 @@ void zwDrawRule(int offset, int width, char ch, int type)
 {
     if (width <= 0)
     {
+        return;
+    }
+
+    int consoleWidth = getConsoleWidth();
+    if (offset < 0) {
+        offset = 0;
+    }
+    if (offset + width > consoleWidth) {
+        width = consoleWidth - offset;
+    }
+    if (width <= 0) {
         return;
     }
 
@@ -283,6 +335,163 @@ int zwGetLastOperationStatus(void)
     return g_lastOperationStatus;
 }
 
+// ===== RESPONSIVE TERMINAL IMPLEMENTATIONS =====
+
+void zwGetConsoleDimensions(int *width, int *height)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+        *width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        *height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    } else {
+        *width = 110;
+        *height = 35;
+    }
+}
+
+// Wrap and print text to fit terminal width
+void zwPrintWrapped(const char *text, int leftMargin, int type)
+{
+    if (!text) return;
+    
+    int width, height;
+    (void)height;
+    zwGetConsoleDimensions(&width, &height);
+    
+    int maxWidth = width - leftMargin - 2;
+    if (maxWidth < 20) maxWidth = 20;
+    
+    size_t textLen = strlen(text);
+    size_t pos = 0;
+    
+    while (pos < textLen) {
+        // Calculate how much text fits on this line
+        size_t lineLen = maxWidth;
+        if (pos + lineLen > textLen) {
+            lineLen = textLen - pos;
+        } else {
+            // Try to break at a word boundary
+            while (lineLen > 0 && text[pos + lineLen - 1] != ' ') {
+                lineLen--;
+            }
+            if (lineLen == 0) {
+                lineLen = maxWidth;
+            } else {
+                // Skip trailing space
+                while (lineLen > 0 && text[pos + lineLen - 1] == ' ') {
+                    lineLen--;
+                }
+            }
+        }
+        
+        // Print the line with left margin
+        zwApplyColor(type);
+        printf("%*s", leftMargin, "");
+        printf("%.*s\n", (int)lineLen, text + pos);
+        fflush(stdout);
+        
+        pos += lineLen;
+        // Skip any spaces at the start of next line
+        while (pos < textLen && text[pos] == ' ') pos++;
+    }
+    zwApplyColor(INFO);
+}
+
+// Print text centered with responsive sizing
+void zwPrintCenteredLine(const char *text, int type)
+{
+    if (!text) return;
+    
+    int width, height;
+    (void)height;
+    zwGetConsoleDimensions(&width, &height);
+    
+    int textLen = (int)strlen(text);
+    int pos = (width - textLen) / 2;
+    if (pos < 0) pos = 0;
+    
+    zwPrint(text, pos, type);
+}
+
+// Draw responsive horizontal rule
+void zwDrawResponsiveRule(char ch, int type)
+{
+    int width, height;
+    (void)height;
+    zwGetConsoleDimensions(&width, &height);
+    
+    int ruleWidth = width - 2;
+    if (ruleWidth < 10) ruleWidth = 10;
+    
+    char line[512];
+    if (ruleWidth > (int)(sizeof(line) - 1)) {
+        ruleWidth = (int)sizeof(line) - 1;
+    }
+    
+    for (int i = 0; i < ruleWidth; i++) {
+        line[i] = ch;
+    }
+    line[ruleWidth] = '\0';
+    
+    zwPrintCentered(line, type);
+}
+
+// Draw responsive box with title
+void zwDrawResponsiveBox(const char *title, int type)
+{
+    int width, height;
+    (void)height;
+    zwGetConsoleDimensions(&width, &height);
+    
+    int boxWidth = width - 4;
+    if (boxWidth < 30) boxWidth = 30;
+    
+    zwDrawResponsiveRule('=', type);
+    
+    if (title) {
+        zwPrintCenteredLine(title, type);
+        zwDrawResponsiveRule('=', type);
+    }
+}
+
+// Print wrapped list of items
+void zwPrintWrappedList(const char *items[], int itemCount, int leftMargin, int type)
+{
+    for (int i = 0; i < itemCount; i++) {
+        if (items[i]) {
+            zwPrintWrapped(items[i], leftMargin, type);
+        }
+    }
+}
+
+// Draw responsive progress bar
+void zwDrawResponsiveProgressBar(const char *label, int percentage, int type)
+{
+    if (percentage < 0) percentage = 0;
+    if (percentage > 100) percentage = 100;
+    
+    int width, height;
+    (void)height;
+    zwGetConsoleDimensions(&width, &height);
+    
+    int barWidth = width - 25;
+    if (barWidth < 10) barWidth = 10;
+    
+    int leftMargin = (width - barWidth - 20) / 2;
+    if (leftMargin < 2) leftMargin = 2;
+    
+    zwApplyColor(type);
+    printf("%*s[%s] ", leftMargin, "", label);
+    
+    int filledWidth = (barWidth * percentage) / 100;
+    for (int i = 0; i < filledWidth; i++) printf("#");
+    for (int i = filledWidth; i < barWidth; i++) printf(".");
+    printf("] %d%%\n", percentage);
+    fflush(stdout);
+    zwApplyColor(INFO);
+}
+
 int zwHasTxtExtension(const char *fileName)
 {
     size_t len;
@@ -388,6 +597,56 @@ int zwValidateFileName(const char *fileName, char *errorBuf, size_t errorSize)
         if (strcmp(upperBase, reserved[i]) == 0)
         {
             snprintf(errorBuf, errorSize, "File name is a reserved Windows device name.");
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int zwValidatePath(const char *path, char *errorBuf, size_t errorSize)
+{
+    size_t len;
+    size_t i;
+
+    if (!errorBuf || errorSize == 0)
+    {
+        return 0;
+    }
+
+    errorBuf[0] = '\0';
+
+    if (!path)
+    {
+        snprintf(errorBuf, errorSize, "Path cannot be null.");
+        return 0;
+    }
+
+    len = strlen(path);
+    if (len == 0)
+    {
+        snprintf(errorBuf, errorSize, "Path cannot be empty.");
+        return 0;
+    }
+
+    if (len >= MAX_PATH * 2)
+    {
+        snprintf(errorBuf, errorSize, "Path is too long.");
+        return 0;
+    }
+
+    for (i = 0; i < len; i++)
+    {
+        unsigned char c = (unsigned char)path[i];
+        if (c < 32)
+        {
+            snprintf(errorBuf, errorSize, "Path contains non-printable characters.");
+            return 0;
+        }
+
+        if (c == '"' || c == '<' || c == '>' || c == '|')
+        {
+            snprintf(errorBuf, errorSize, "Path contains invalid Windows characters.");
             return 0;
         }
     }

@@ -1,4 +1,5 @@
 *.exe
+*.o
 *.zip
 *_output.txt
 cp_smoke.txt
