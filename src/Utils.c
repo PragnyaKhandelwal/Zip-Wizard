@@ -416,6 +416,15 @@ void zwInputFieldUnderline(const char *prompt, char *buffer, size_t size, int ty
 void zwDrawBoxSimple(int width, int type)
 {
     int base = zwGetAdaptiveBaseOffset();
+    int consoleWidth = getConsoleWidth();
+    int available = consoleWidth - base - 2;
+
+    if (available < 1) {
+        available = 1;
+    }
+    if (width > available) {
+        width = available;
+    }
 
     zwApplyColor(type);
     if (base > 0) {
