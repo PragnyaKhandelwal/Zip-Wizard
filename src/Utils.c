@@ -8,20 +8,50 @@ static int g_lastOperationStatus = 0;
 static int getConsoleWidth(void);
 static void zwApplyColor(int type);
 
-static void zwRenderInputLine(const char *prompt, const char *buffer, int type)
+static int zwGetAdaptiveInputOffset(int width)
 {
-    int width = getConsoleWidth();
+    int contentWidth = 86;
+    if (width <= contentWidth) {
+        return 0;
+    }
+    return (width - contentWidth) / 2;
+}
+
+static void zwRenderInputLine(const char *prompt, const char *buffer, int type, SHORT inputRow, int keepCurrentX)
+{
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int width;
+    int startX;
+    int offset;
     int promptLen = (int)strlen(prompt);
     int inputLen = (int)strlen(buffer);
     int maxInputWidth;
     const char *visibleInput;
     int visibleLen;
+    COORD lineStart;
+    DWORD written = 0;
 
+    if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+        return;
+    }
+
+    width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    startX = csbi.srWindow.Left;
     if (width < 20) {
         width = 20;
     }
 
-    maxInputWidth = width - promptLen - 2;
+    if (keepCurrentX) {
+        offset = csbi.dwCursorPosition.X - startX;
+        if (offset < 0) {
+            offset = 0;
+        }
+    } else {
+        offset = zwGetAdaptiveInputOffset(width);
+    }
+
+    maxInputWidth = width - offset - promptLen - 2;
     if (maxInputWidth < 1) {
         maxInputWidth = 1;
     }
@@ -34,20 +64,29 @@ static void zwRenderInputLine(const char *prompt, const char *buffer, int type)
         visibleLen = inputLen;
     }
 
+    lineStart.X = (SHORT)startX;
+    lineStart.Y = inputRow;
+    FillConsoleOutputCharacterA(hConsole, ' ', (DWORD)width, lineStart, &written);
+    FillConsoleOutputAttribute(hConsole, csbi.wAttributes, (DWORD)width, lineStart, &written);
+
+    {
+        COORD promptPos;
+        promptPos.X = (SHORT)(startX + offset);
+        promptPos.Y = inputRow;
+        SetConsoleCursorPosition(hConsole, promptPos);
+    }
+
     zwApplyColor(type);
-    printf("\r%s", prompt);
+    printf("%s", prompt);
     if (visibleLen > 0) {
         printf("%.*s", visibleLen, visibleInput);
     }
 
-    // Clear leftover characters from older, longer renders.
-    for (int i = visibleLen; i < maxInputWidth; i++) {
-        putchar(' ');
-    }
-
-    // Move cursor back to logical end of user input.
-    for (int i = visibleLen; i < maxInputWidth; i++) {
-        putchar('\b');
+    {
+        COORD cursorPos;
+        cursorPos.X = (SHORT)(startX + offset + promptLen + visibleLen);
+        cursorPos.Y = inputRow;
+        SetConsoleCursorPosition(hConsole, cursorPos);
     }
 
     fflush(stdout);
@@ -55,21 +94,37 @@ static void zwRenderInputLine(const char *prompt, const char *buffer, int type)
 
 static void zwReadLineResponsive(const char *prompt, char *buffer, size_t size, int type)
 {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
     int lastWidth = -1;
+    SHORT inputRow = 0;
+    int keepCurrentX = 0;
     size_t len = 0;
 
     if (!buffer || size == 0) {
         return;
     }
 
+    if (!prompt) {
+        prompt = "";
+    }
+
+    if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+        buffer[0] = '\0';
+        return;
+    }
+
+    inputRow = csbi.dwCursorPosition.Y;
+    keepCurrentX = (prompt[0] == '\0');
+
     buffer[0] = '\0';
-    zwRenderInputLine(prompt, buffer, type);
+    zwRenderInputLine(prompt, buffer, type, inputRow, keepCurrentX);
 
     while (1) {
         int width = getConsoleWidth();
         if (width != lastWidth) {
             lastWidth = width;
-            zwRenderInputLine(prompt, buffer, type);
+            zwRenderInputLine(prompt, buffer, type, inputRow, keepCurrentX);
         }
 
         if (_kbhit()) {
@@ -84,7 +139,7 @@ static void zwReadLineResponsive(const char *prompt, char *buffer, size_t size, 
                 if (len > 0) {
                     len--;
                     buffer[len] = '\0';
-                    zwRenderInputLine(prompt, buffer, type);
+                    zwRenderInputLine(prompt, buffer, type, inputRow, keepCurrentX);
                 }
                 continue;
             }
@@ -98,7 +153,7 @@ static void zwReadLineResponsive(const char *prompt, char *buffer, size_t size, 
                 if (len + 1 < size) {
                     buffer[len++] = (char)ch;
                     buffer[len] = '\0';
-                    zwRenderInputLine(prompt, buffer, type);
+                    zwRenderInputLine(prompt, buffer, type, inputRow, keepCurrentX);
                 }
                 continue;
             }
