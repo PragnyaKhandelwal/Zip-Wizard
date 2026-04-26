@@ -1,10 +1,112 @@
 #include "Utils.h"
 #include <ctype.h>
 #include <string.h>
+#include <conio.h>
 #include <windows.h>
 
 static int g_lastOperationStatus = 0;
 static int getConsoleWidth(void);
+static void zwApplyColor(int type);
+
+static void zwRenderInputLine(const char *prompt, const char *buffer, int type)
+{
+    int width = getConsoleWidth();
+    int promptLen = (int)strlen(prompt);
+    int inputLen = (int)strlen(buffer);
+    int maxInputWidth;
+    const char *visibleInput;
+    int visibleLen;
+
+    if (width < 20) {
+        width = 20;
+    }
+
+    maxInputWidth = width - promptLen - 2;
+    if (maxInputWidth < 1) {
+        maxInputWidth = 1;
+    }
+
+    if (inputLen > maxInputWidth) {
+        visibleInput = buffer + (inputLen - maxInputWidth);
+        visibleLen = maxInputWidth;
+    } else {
+        visibleInput = buffer;
+        visibleLen = inputLen;
+    }
+
+    zwApplyColor(type);
+    printf("\r%s", prompt);
+    if (visibleLen > 0) {
+        printf("%.*s", visibleLen, visibleInput);
+    }
+
+    // Clear leftover characters from older, longer renders.
+    for (int i = visibleLen; i < maxInputWidth; i++) {
+        putchar(' ');
+    }
+
+    // Move cursor back to logical end of user input.
+    for (int i = visibleLen; i < maxInputWidth; i++) {
+        putchar('\b');
+    }
+
+    fflush(stdout);
+}
+
+static void zwReadLineResponsive(const char *prompt, char *buffer, size_t size, int type)
+{
+    int lastWidth = -1;
+    size_t len = 0;
+
+    if (!buffer || size == 0) {
+        return;
+    }
+
+    buffer[0] = '\0';
+    zwRenderInputLine(prompt, buffer, type);
+
+    while (1) {
+        int width = getConsoleWidth();
+        if (width != lastWidth) {
+            lastWidth = width;
+            zwRenderInputLine(prompt, buffer, type);
+        }
+
+        if (_kbhit()) {
+            int ch = _getch();
+
+            if (ch == 13) {
+                printf("\n");
+                break;
+            }
+
+            if (ch == 8) {
+                if (len > 0) {
+                    len--;
+                    buffer[len] = '\0';
+                    zwRenderInputLine(prompt, buffer, type);
+                }
+                continue;
+            }
+
+            if (ch == 0 || ch == 224) {
+                (void)_getch();
+                continue;
+            }
+
+            if (ch >= 32 && ch <= 126) {
+                if (len + 1 < size) {
+                    buffer[len++] = (char)ch;
+                    buffer[len] = '\0';
+                    zwRenderInputLine(prompt, buffer, type);
+                }
+                continue;
+            }
+        }
+
+        Sleep(20);
+    }
+}
 
 static void zwApplyColor(int type)
 {
@@ -101,16 +203,7 @@ void zwPrintInline(const char *text, int offset, int type)
 void zwReadLine(char *buffer, size_t size, int offset)
 {
     zwMoveCursor(offset);
-    if (fgets(buffer, (int)size, stdin) == NULL)
-    {
-        if (size > 0)
-        {
-            buffer[0] = '\0';
-        }
-        return;
-    }
-
-    buffer[strcspn(buffer, "\n")] = '\0';
+    zwReadLineResponsive("", buffer, size, INFO);
 }
 
 void zwClearScreen(void)
@@ -195,21 +288,7 @@ void zwPrintCentered(const char *text, int type)
 // Prompt + Input aligned properly (KEY IMPROVEMENT)
 void zwPromptInput(const char *prompt, char *buffer, size_t size, int type)
 {
-    zwApplyColor(type);
-    
-    // Print prompt at column 0 and read from where it ends
-    printf("%s", prompt);
-    fflush(stdout);
-    
-    // Read input on the same line
-    if (fgets(buffer, (int)size, stdin) == NULL)
-    {
-        if (size > 0) buffer[0] = '\0';
-        return;
-    }
-    buffer[strcspn(buffer, "\n")] = '\0';
-    
-    // Reset color
+    zwReadLineResponsive(prompt ? prompt : "", buffer, size, type);
     zwApplyColor(INFO);
 }
 
@@ -217,21 +296,13 @@ void zwPromptInput(const char *prompt, char *buffer, size_t size, int type)
 void zwInputFieldUnderline(const char *prompt, char *buffer, size_t size, int type)
 {
     zwApplyColor(type);
-    printf("\n  %s", prompt);
-    fflush(stdout);
+    printf("\n");
     
-    // Calculate underline width
-    int underlineLen = (int)strlen(prompt) + 2;
+    zwReadLineResponsive(prompt ? prompt : "", buffer, size, type);
+
+    int underlineLen = (int)strlen(prompt ? prompt : "") + 2;
     if (underlineLen > 60) underlineLen = 60;
-    
-    if (fgets(buffer, (int)size, stdin) == NULL)
-    {
-        if (size > 0) buffer[0] = '\0';
-        return;
-    }
-    buffer[strcspn(buffer, "\n")] = '\0';
-    
-    // Print underline below input
+
     printf("  ");
     for (int i = 0; i < underlineLen; i++) printf("_");
     printf("\n");
