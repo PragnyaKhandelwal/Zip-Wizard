@@ -17,6 +17,16 @@ static int zwGetAdaptiveInputOffset(int width)
     return (width - contentWidth) / 2;
 }
 
+static int zwGetAdaptiveBaseOffset(void)
+{
+    int width = getConsoleWidth();
+    int contentWidth = 86;
+    if (width <= contentWidth) {
+        return 0;
+    }
+    return (width - contentWidth) / 2;
+}
+
 static void zwRenderInputLine(const char *prompt, const char *buffer, int type, SHORT inputRow, int keepCurrentX)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -195,8 +205,17 @@ void zwMoveCursor(int offset)
 {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    int finalOffset = offset;
+
     GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-    COORD coord = {(SHORT)offset, consoleInfo.dwCursorPosition.Y};
+
+    // For regular left-anchored lines (offsets close to left margin),
+    // apply adaptive base so statements stay aligned with window resize.
+    if (offset >= 0 && offset <= 12) {
+        finalOffset += zwGetAdaptiveBaseOffset();
+    }
+
+    COORD coord = {(SHORT)finalOffset, consoleInfo.dwCursorPosition.Y};
     SetConsoleCursorPosition(hConsole, coord);
 }
 
@@ -369,7 +388,12 @@ void zwInputFieldUnderline(const char *prompt, char *buffer, size_t size, int ty
 // Simple box drawing (top border)
 void zwDrawBoxSimple(int width, int type)
 {
+    int base = zwGetAdaptiveBaseOffset();
+
     zwApplyColor(type);
+    if (base > 0) {
+        printf("%*s", base, "");
+    }
     printf("  ");
     for (int i = 0; i < width; i++) printf("=");
     printf("\n");
